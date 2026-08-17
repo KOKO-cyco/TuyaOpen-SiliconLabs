@@ -25,15 +25,27 @@ list(GET TOOLCHAIN_CANDIDATES 0 TOOLCHAIN_ROOT)
 set(TOOLCHAIN_DIR ${TOOLCHAIN_ROOT}/bin)
 set(TOOLCHAIN_PRE "arm-none-eabi-")
 
+# The tools carry a .exe on a Windows host. CMake will not guess that for a
+# compiler given as an explicit path -- it checks the name as written and
+# reports "is not a full path to an existing compiler tool" -- so spell the
+# suffix out. CMAKE_HOST_WIN32 and not CMAKE_EXECUTABLE_SUFFIX: the latter
+# describes what this toolchain produces (bare ELF for the target), while what
+# matters here is the host running the compiler.
+if(CMAKE_HOST_WIN32)
+    set(TOOLCHAIN_EXT ".exe")
+else()
+    set(TOOLCHAIN_EXT "")
+endif()
+
 set(CMAKE_SYSTEM_NAME              Generic)
 set(CMAKE_SYSTEM_PROCESSOR         ARM)
 
-set(CMAKE_C_COMPILER               "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}gcc")
-set(CMAKE_CXX_COMPILER             "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}g++")
-set(CMAKE_ASM_COMPILER             "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}gcc")
-set(CMAKE_RANLIB                   "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}ranlib")
-set(CMAKE_AR                       "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}ar")
-set(CMAKE_SIZE                     "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}size")
+set(CMAKE_C_COMPILER               "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}gcc${TOOLCHAIN_EXT}")
+set(CMAKE_CXX_COMPILER             "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}g++${TOOLCHAIN_EXT}")
+set(CMAKE_ASM_COMPILER             "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}gcc${TOOLCHAIN_EXT}")
+set(CMAKE_RANLIB                   "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}ranlib${TOOLCHAIN_EXT}")
+set(CMAKE_AR                       "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}ar${TOOLCHAIN_EXT}")
+set(CMAKE_SIZE                     "${TOOLCHAIN_DIR}/${TOOLCHAIN_PRE}size${TOOLCHAIN_EXT}")
 
 execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE COMPILER_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
 

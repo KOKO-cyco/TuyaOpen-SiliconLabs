@@ -200,10 +200,16 @@ install_arm_toolchain()
         toolchain_dir="tools/toolchain"
     fi
 
-    # Check if the toolchain is already present at the desired location
-    if command -v "${toolchain_dir}/${extract_dir}/bin/arm-none-eabi-gcc"; then
+    # Check if the toolchain is already present at the desired location.
+    # The binary carries a .exe on Windows, so testing the bare name there
+    # always misses and the whole 313 MB archive gets fetched again.
+    local gcc_exe="${toolchain_dir}/${extract_dir}/bin/arm-none-eabi-gcc"
+    case "$(uname -s)" in
+        MINGW* | MSYS* | CYGWIN*) gcc_exe="${gcc_exe}.exe" ;;
+    esac
+    if [ -x "${gcc_exe}" ]; then
         echo "'arm-none-eabi-gcc' found. Skipping GNU ARM Embedded toolchain install"
-        "${toolchain_dir}"/"${extract_dir}"/bin/arm-none-eabi-gcc --version
+        "${gcc_exe}" --version
         return
     fi
 
