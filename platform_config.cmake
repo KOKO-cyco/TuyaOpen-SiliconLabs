@@ -54,7 +54,17 @@ add_definitions(-DSLI_SI917B0)
 # platform/SiWx917. Confirmed via nm the hard way: CMAKE_SOURCE_DIR here
 # resolved to a nonexistent path, which -I silently skips with no build error,
 # and decoder_mp3.c.obj fell through to tal_psram_malloc unnoticed.
-if(CONFIG_MP3_DECODER_STATIC_BUF STREQUAL "y")
+#
+# ENABLE_AI_PLAYER has to be tested too, not just MP3_DECODER_STATIC_BUF: the
+# board Kconfig selects the latter unconditionally, so it is y for every app
+# built for this board, while src/audio_player/CMakeLists.txt only creates the
+# audio_player target when the AI player is enabled. An app without it --
+# switch_demo, which has no config/ of its own and so gets built against
+# boards/SiWx917/config/SiWx917.config by `tos.py dev bac` -- has no such
+# target, and TARGET_DIRECTORY on a target that does not exist is a hard CMake
+# error rather than a no-op. Without the AI player there is no decoder_mp3.c in
+# the build to redirect anyway.
+if(CONFIG_MP3_DECODER_STATIC_BUF STREQUAL "y" AND CONFIG_ENABLE_AI_PLAYER STREQUAL "y")
     cmake_language(DEFER CALL set_source_files_properties
         "${TOP_SOURCE_DIR}/src/audio_player/src/decoder/decoder_mp3.c"
         TARGET_DIRECTORY audio_player
