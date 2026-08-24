@@ -16,12 +16,30 @@ add_definitions(-DSLI_SI917B0)
 
 # The MP3 decoder's scratch buffer is rewritten throughout every frame; this
 # board's general purpose heap is in PSRAM (see tkl_memory.c), which can't
-# keep up. Point the decoder's MP3_MALLOC/MP3_FREE hooks
-# (src/audio_player/.../minimp3.h, unmodified from upstream's #ifndef
-# MP3_MALLOC / #else structure) at this platform's own allocator via
-# -include: forcing mp3_malloc_platform.h at the top of every translation
-# unit has the exact same preprocessor effect as -DMP3_MALLOC=..., just as an
-# actual (greppable) file instead of a raw command-line string.
+# keep up. decoder_mp3.c/minimp3.h are untouched upstream: both branch on
+# ENABLE_EXT_RAM (true on this board) to name their allocator
+# tal_psram_malloc/tal_psram_free directly, with no override hook. Force-
+# including mp3_malloc_platform.h -- which #defines those two names to
+# mp3_internal_malloc/mp3_internal_free -- ahead of decoder_mp3.c's own text
+# redirects both the scratch (minimp3.h) and context (decoder_mp3.c)
+# allocations to the dedicated internal-RAM pool (mcu/src/mp3_internal_pool.c),
+# with neither source file needing to know this platform exists.
+#
+# Scoped to decoder_mp3.c ONLY, not the whole of src/ via add_compile_options:
+# tal_psram_malloc/free are the generic PSRAM allocator used throughout src/
+# (tal_memory.h's Malloc() maps to it; tuya_ai_output.c allocates its output
+# buffer that way), so redefining them build-wide would silently reroute every
+# one of those callers into this 23KB MP3-only pool instead of PSRAM.
+#
+# Deferred because the scoping and the injection point pull opposite ways:
+# set_source_files_properties can only reach a file whose directory has been
+# add_subdirectory()'d already, but this file is include()d before
+# add_subdirectory(src/...) -- calling it directly here is silently ignored
+# (verified: -include never appeared in decoder_mp3.c's compile command and
+# the object still referenced tal_psram_malloc). cmake_language(DEFER) runs it
+# at the end of the top-level directory scope instead, by which point
+# src/audio_player has been processed, and TARGET_DIRECTORY puts the property
+# in the scope that actually compiles the file.
 #
 # Must be defined here, not in ./CMakeLists.txt: the same define added there
 # once compiled decoder_mp3.c.obj against tal_psram_malloc regardless (verified
@@ -37,7 +55,11 @@ add_definitions(-DSLI_SI917B0)
 # resolved to a nonexistent path, which -I silently skips with no build error,
 # and decoder_mp3.c.obj fell through to tal_psram_malloc unnoticed.
 if(CONFIG_MP3_DECODER_STATIC_BUF STREQUAL "y")
-    add_compile_options(-include ${PLATFORM_PATH}/mcu/include/mp3_malloc_platform.h)
+    cmake_language(DEFER CALL set_source_files_properties
+        "${TOP_SOURCE_DIR}/src/audio_player/src/decoder/decoder_mp3.c"
+        TARGET_DIRECTORY audio_player
+        PROPERTIES COMPILE_OPTIONS
+            "-include;${PLATFORM_PATH}/mcu/include/mp3_malloc_platform.h")
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
