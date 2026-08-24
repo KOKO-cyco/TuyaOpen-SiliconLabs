@@ -154,6 +154,23 @@ def _slc_installed(root):
     return False
 
 
+def _java_available(root):
+    """
+    Return True if slc can find a JVM: either the bundled tools/jre or a java
+    on PATH.
+
+    slc_cli is a Java application -- `slc` is a shell wrapper whose second line
+    execs java -- so without one it dies with "java: command not found" and
+    takes the whole generate step with it. script/slc_cli prepends
+    tools/jre/bin to PATH when that java is executable, which is the layout
+    install_jre produces.
+    """
+    import shutil
+    if os.access(os.path.join(root, "tools", "jre", "bin", "java"), os.X_OK):
+        return True
+    return shutil.which("java") is not None
+
+
 def _toolchain_installed(root):
     """
     Return True if an extracted bare-metal ARM toolchain sits in the shared
@@ -184,6 +201,19 @@ def download_tools(root, prepare_file):
             return False
     elif need_slc:
         # Toolchain may already exist from a partial bootstrap; still need SLC CLI.
+        #
+        # The JRE has to be asked for separately here. Only the full
+        # ./script/bootstrap runs install_jre, and this branch skips it because
+        # the toolchain is already present -- which is exactly the CI shape: the
+        # shared platform/tools is pre-seeded with the compiler, so a freshly
+        # cloned platform takes this path, installs slc, and then slc cannot
+        # start. That surfaced as "java: command not found" followed by
+        # "slc_generate.py failed (1)", with the toolchain sitting right there.
+        if not _java_available(root):
+            print("No JRE for slc, installing one ...")
+            if run_shell_script("./script/bootstrap", "jre") != 0:
+                print("Failed to install a JRE. Run: ./script/bootstrap jre")
+                return False
         print("SLC CLI not found, installing Silicon Labs tools ...")
         if run_shell_script("./script/bootstrap_silabs") != 0:
             print("Failed to install SLC CLI. Run: ./script/bootstrap silabs")
