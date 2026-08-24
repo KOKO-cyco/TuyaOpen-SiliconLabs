@@ -163,11 +163,20 @@ def _java_available(root):
     execs java -- so without one it dies with "java: command not found" and
     takes the whole generate step with it. script/slc_cli prepends
     tools/jre/bin to PATH when that java is executable, which is the layout
-    install_jre produces.
+    install_jre produces on all three hosts (it descends into Contents/Home for
+    the macOS bundle so the path does not vary).
+
+    Both spellings of the binary are probed because this runs in the native
+    interpreter, where "java" simply does not exist on Windows. The bash side
+    tests -x on the extension-less name and gets away with it under MSYS;
+    Python does not, and would otherwise re-run the installer on every build
+    for a JRE that is already there.
     """
     import shutil
-    if os.access(os.path.join(root, "tools", "jre", "bin", "java"), os.X_OK):
-        return True
+    jre_bin = os.path.join(root, "tools", "jre", "bin")
+    for name in ("java", "java.exe"):
+        if os.access(os.path.join(jre_bin, name), os.X_OK):
+            return True
     return shutil.which("java") is not None
 
 
