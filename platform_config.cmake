@@ -17,20 +17,27 @@ add_definitions(-DSLI_SI917B0)
 # The MP3 decoder's scratch buffer is rewritten throughout every frame; this
 # board's general purpose heap is in PSRAM (see tkl_memory.c), which can't
 # keep up. Point the decoder's MP3_MALLOC/MP3_FREE hooks
-# (src/audio_player/.../minimp3.h) at a dedicated internal-RAM pool
-# (mcu/src/mp3_internal_pool.c, added to the link in ./CMakeLists.txt) instead
-# of the default ENABLE_EXT_RAM-based allocator.
+# (src/audio_player/.../minimp3.h, unmodified from upstream's #ifndef
+# MP3_MALLOC / #else structure) at this platform's own allocator via
+# -include: forcing mp3_malloc_platform.h at the top of every translation
+# unit has the exact same preprocessor effect as -DMP3_MALLOC=..., just as an
+# actual (greppable) file instead of a raw command-line string.
 #
-# Must be defined here, not in ./CMakeLists.txt: the same -D added there
-# compiled decoder_mp3.c.obj against tal_psram_malloc regardless (verified via
-# nm), i.e. it never reached src/'s compile flags, only this platform's own
+# Must be defined here, not in ./CMakeLists.txt: the same define added there
+# once compiled decoder_mp3.c.obj against tal_psram_malloc regardless (verified
+# via nm), i.e. it never reached src/'s compile flags, only this platform's own
 # adapter sources. This file is include()d from the root CMakeLists.txt before
 # add_subdirectory(src/...), which does reach it (same place SLI_SI917B0
-# below is defined, and where the file already generates the SLC project
-# before src/ needs its output).
+# above is defined). Also must use PLATFORM_PATH, not CMAKE_SOURCE_DIR: this
+# file runs in the TOP-LEVEL (TuyaOpen-root) CMake project, where
+# CMAKE_SOURCE_DIR is the repo root, not platform/SiWx917 -- unlike
+# ./CMakeLists.txt, which is its own separate platform-rooted CMake project
+# (built into apps/*/.build/your_chat_bot/) where CMAKE_SOURCE_DIR does mean
+# platform/SiWx917. Confirmed via nm the hard way: CMAKE_SOURCE_DIR here
+# resolved to a nonexistent path, which -I silently skips with no build error,
+# and decoder_mp3.c.obj fell through to tal_psram_malloc unnoticed.
 if(CONFIG_MP3_DECODER_STATIC_BUF STREQUAL "y")
-    add_definitions(-DMP3_MALLOC=mp3_internal_malloc
-                    -DMP3_FREE=mp3_internal_free)
+    add_compile_options(-include ${PLATFORM_PATH}/mcu/include/mp3_malloc_platform.h)
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
