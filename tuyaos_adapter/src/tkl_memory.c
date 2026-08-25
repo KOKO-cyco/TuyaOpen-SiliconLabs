@@ -37,7 +37,7 @@
 #include "psram_heap_4.h"
 #include "tuya_error_code.h"
 #include "tkl_memory.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 
 // -----------------------------------------------------------------------------
 //                              Macros and Typedefs

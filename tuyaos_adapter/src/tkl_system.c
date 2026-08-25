@@ -39,8 +39,9 @@
 
 #include "tuya_error_code.h"
 #include "tkl_system.h"
+#include "sl_tuya_system.h"
 #include "tkl_timer.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "sl_core.h"
 #include "sl_si91x_hal_soc_soft_reset.h"
 
@@ -71,7 +72,7 @@ RAMFUNC static void sl_systick_handle(void *args)
     g_mstick += SL_SYSTICK_MS_STEP;
 }
 
-void tkl_system_timer_init(void)
+void sl_tuya_system_timer_init(void)
 {
     TUYA_TIMER_BASE_CFG_T sg_timer_cfg = {.mode = TUYA_TIMER_MODE_PERIOD, .args = NULL, .cb = sl_systick_handle};
 
@@ -211,7 +212,7 @@ OPERATE_RET tkl_system_get_cpu_info(TUYA_CPU_INFO_T **cpu_ary, int *cpu_cnt)
     return OPRT_NOT_SUPPORTED;
 }
 
-void tkl_system_print_task_stats(void)
+void sl_tuya_system_print_task_stats(void)
 {
     static TaskStatus_t *s_prev       = NULL;
     static UBaseType_t   s_prev_count = 0;

@@ -10,7 +10,7 @@
  *       Wakeup/free modes must not be enabled on this board.
  */
 #include "tkl_kws.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 
 /**
  * @brief Initialize KWS (no-op on SiWx917)

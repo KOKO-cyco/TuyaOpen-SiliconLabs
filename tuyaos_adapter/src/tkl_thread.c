@@ -34,7 +34,7 @@
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include "task.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "tkl_thread.h"
 #include "tuya_error_code.h"
 

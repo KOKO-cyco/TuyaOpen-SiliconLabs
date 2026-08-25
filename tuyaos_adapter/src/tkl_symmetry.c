@@ -7,7 +7,7 @@
  */
 #include "tkl_symmetry.h"
 #include "tkl_memory.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 
 #include "mbedtls/aes.h"
 #include "sl_si91x_crypto.h"

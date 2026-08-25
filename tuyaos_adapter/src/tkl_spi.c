@@ -38,7 +38,7 @@
 #include "sl_si91x_ssi.h"
 #include "sl_si91x_gspi.h"
 #include "tkl_spi.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "FreeRTOSConfig.h"
 
 // -----------------------------------------------------------------------------

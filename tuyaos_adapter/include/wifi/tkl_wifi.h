@@ -1,12 +1,12 @@
 /**
-* @file tkl_wifi.h
-* @brief Common process - adapter the wi-fi api
-* @version 0.1
-* @date 2020-11-09
-*
-* @copyright Copyright 2020-2021 Tuya Inc. All Rights Reserved.
-*
-*/
+ * @file tkl_wifi.h
+ * @brief Common process - adapter the wi-fi api
+ * @version 0.1
+ * @date 2020-11-09
+ *
+ * @copyright Copyright 2020-2021 Tuya Inc. All Rights Reserved.
+ *
+ */
 #ifndef __TKL_WIFI_H__
 #define __TKL_WIFI_H__
 
@@ -22,7 +22,7 @@ extern "C" {
 
 typedef struct {
     uint8_t channel;                 ///< AP channel
-    int8_t  rssi;                    ///< AP rssi
+    int8_t rssi;                     ///< AP rssi
     uint8_t bssid[6];                ///< AP bssid
     uint8_t ssid[WIFI_SSID_LEN + 1]; ///< AP ssid array
     uint8_t s_len;                   ///< AP ssid len
@@ -63,16 +63,16 @@ typedef enum {
 
 /* tuya sdk definition of ap config info */
 typedef struct {
-    uint8_t           ssid[WIFI_SSID_LEN + 1];     ///< ssid
-    uint8_t           s_len;                       ///< len of ssid
-    uint8_t           passwd[WIFI_PASSWD_LEN + 1]; ///< passwd
-    uint8_t           p_len;                       ///< len of passwd
-    uint8_t           chan;                        ///< channel. default:6
-    WF_AP_AUTH_MODE_E md;                          ///< encryption type
-    uint8_t           ssid_hidden;                 ///< ssid hidden  default:0
-    uint8_t           max_conn;                    ///< max sta connect nums default:1
-    uint16_t          ms_interval;                 ///< broadcast interval default:100
-    NW_IP_S           ip;                          ///< ip info for ap mode
+    uint8_t ssid[WIFI_SSID_LEN + 1];     ///< ssid
+    uint8_t s_len;                       ///< len of ssid
+    uint8_t passwd[WIFI_PASSWD_LEN + 1]; ///< passwd
+    uint8_t p_len;                       ///< len of passwd
+    uint8_t chan;                        ///< channel. default:6
+    WF_AP_AUTH_MODE_E md;                ///< encryption type
+    uint8_t ssid_hidden;                 ///< ssid hidden  default:0
+    uint8_t max_conn;                    ///< max sta connect nums default:1
+    uint16_t ms_interval;                ///< broadcast interval default:100
+    NW_IP_S ip;                          ///< ip info for ap mode
 } WF_AP_CFG_IF_S;
 
 /* tuya sdk definition of wifi station work status */
@@ -95,11 +95,11 @@ typedef struct {
 } FAST_DHCP_INFO_T;
 /* for fast connect*/
 typedef struct {
-    uint32_t len;     ///< data len
-    uint8_t  data[0]; ///< data buff
+    uint32_t len;    ///< data len
+    uint8_t data[0]; ///< data buff
 } FAST_WF_CONNECTED_AP_INFO_T;
 typedef struct {
-    FAST_DHCP_INFO_T            fast_dhcp;
+    FAST_DHCP_INFO_T fast_dhcp;
     FAST_WF_CONNECTED_AP_INFO_T fast_mac;
 } FAST_CONNECTED_INFO_T;
 /* tuya sdk definition of wifi event notify */
@@ -124,17 +124,19 @@ typedef enum {
     TUYA_WLAN_REASON_PAIRWISE_CIPHER_INVALID,    ///< Pairwise cipher invalid of WPA/RSN IE in association request
     TUYA_WLAN_REASON_UNSPPORTED_RSN_IE_VERSION,  ///< Invalid WPA/RSN IE version
     TUYA_WLAN_REASON_AKMP_INVALID, ///< WPA/RSN information element rejected because of invalid auth key management
-    TUYA_WLAN_REASON_INVALID_RSN_IE_CAP,         ///< Invalid RSN Capabilities
-    TUYA_WLAN_REASON_CIPHER_REJECTED_PER_POLICY, ///< Station tried to use TKIP with HT association
-    TUYA_WLAN_REASON_PMF_REQUIRED,               ///< Rejected because of invalid PMF required
-    TUYA_WLAN_REASON_PREV_AUTH_INVALID,          ///< SA Query timed out
-    TUYA_WLAN_REASON_NOT_ASSOCED,                ///< Station tried to 4-way handshake before associate
-    TUYA_WLAN_REASON_WRONG_PASSWORD,             ///<  Wrong password for 4-way handshake
-    TUYA_WLAN_REASON_MIC_FAILURE,                ///< Michael check failed
-    TUYA_WLAN_REASON_RSN_IE_IN_4WAYS_MISMATCH,   ///< RSN IE mismatch between AP and station of 4-way handshake
-    TUYA_WLAN_REASON_4WAYS_HANDSHAKE_TIMEOUT,    ///< Timeout of 4-way handshake
-    TUYA_WLAN_REASON_INACTIVITY_DISCONNECT,      ///< Station disconnected to AP beacause of in activity
-    TUYA_WLAN_REASON_DEAUTH_LEAVING,             ///< Deauth the station because it was left
+    TUYA_WLAN_REASON_INVALID_RSN_IE_CAP,          ///< Invalid RSN Capabilities
+    TUYA_WLAN_REASON_CIPHER_REJECTED_PER_POLICY,  ///< Station tried to use TKIP with HT association
+    TUYA_WLAN_REASON_PMF_REQUIRED,                ///< Rejected because of invalid PMF required
+    TUYA_WLAN_REASON_PREV_AUTH_INVALID,           ///< SA Query timed out
+    TUYA_WLAN_REASON_NOT_ASSOCED,                 ///< Station tried to 4-way handshake before associate
+    TUYA_WLAN_REASON_WRONG_PASSWORD,              ///<  Wrong password for 4-way handshake
+    TUYA_WLAN_REASON_MIC_FAILURE,                 ///< Michael check failed
+    TUYA_WLAN_REASON_RSN_IE_IN_4WAYS_MISMATCH,    ///< RSN IE mismatch between AP and station of 4-way handshake
+    TUYA_WLAN_REASON_4WAYS_HANDSHAKE_TIMEOUT,     ///< Timeout of 4-way handshake
+    TUYA_WLAN_REASON_INACTIVITY_DISCONNECT,       ///< Station disconnected to AP beacause of in activity
+    TUYA_WLAN_REASON_DEAUTH_LEAVING,              ///< Deauth the station because it was left
+    TUYA_WLAN_REASON_AP_UNABLE_TO_HANDLE_NEW_STA, ///< Association denied because AP is unable to handle additional
+                                                  ///< associated STAs
     TUYA_WLAN_REASON_MAX,
 } WF_DISCONN_REASON_E;
 
@@ -142,13 +144,14 @@ typedef enum {
 typedef enum {
     WFI_BEACON_CMD,
     WFI_GET_LAST_DISCONN_REASON, ///< Get WiFi last disconnect reason
-    WFI_AP_GET_STALIST_CMD,
+    WFI_AP_GET_STALIST_CMD,      ///< Get Sta List Cmd
+    WFI_CONNECT_CMD,
 } WF_IOCTL_CMD_E;
 
 typedef struct {
     uint8_t *ssid;
     uint8_t *passwd;
-    uint8_t  channel;
+    uint8_t channel;
 } WF_IOCTL_CONN_T;
 
 typedef enum {
@@ -161,23 +164,22 @@ typedef enum {
 } LWIP_EVENT_E;
 
 typedef struct {
-    uint8_t  ssid[WIFI_SSID_LEN + 1];
-    uint8_t  channel;
+    uint8_t ssid[WIFI_SSID_LEN + 1];
+    uint8_t channel;
     NW_MAC_S mac;
     uint32_t vsie_data_len;
     uint8_t *vsie_data;
 } WF_IOCTL_BEACON_T;
 
 typedef struct {
-    NW_IP_S  sta_ip;
+    NW_IP_S sta_ip;
     NW_MAC_S sta_mac;
 } WF_STA_INFO_S;
 
 typedef struct {
     WF_STA_INFO_S *array;
-    uint32_t       num;
+    uint32_t num;
 } WF_STA_LIST_S;
-
 /**
  * @brief callback function: SNIFFER_CALLBACK
  *        when wifi sniffers package from air, notify tuyaos
@@ -290,14 +292,24 @@ OPERATE_RET tkl_wifi_set_sniffer(const BOOL_T en, const SNIFFER_CALLBACK cb);
 OPERATE_RET tkl_wifi_get_ip(const WF_IF_E wf, NW_IP_S *ip);
 
 /**
- * @brief set wifi ip info.when wifi works in
+ * @brief get wifi ip info.when wifi works in
  *        ap+station mode, wifi has two ips.
+ *
+ * @param[in]       wf          wifi function type
+ * @param[in]       wf          wifi ip type
+ * @param[out]      ip          the ip addr info
+ * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
+ */
+OPERATE_RET tkl_wifi_get_ipv6(const WF_IF_E wf, NW_IP_TYPE type, NW_IP_S *ip);
+
+/**
+ * @brief wifi set ip
  *
  * @param[in]       wf     wifi function type
  * @param[in]       ip     the ip addr info
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tkl_wifi_set_ip(WF_IF_E wf, NW_IP_S *ip);
+OPERATE_RET tkl_wifi_set_ip(const WF_IF_E wf, NW_IP_S *ip);
 
 /**
  * @brief set wifi mac info.when wifi works in
@@ -365,7 +377,7 @@ OPERATE_RET tkl_wifi_set_country_code(const COUNTRY_CODE_E ccode);
  *
  * @return true on success. faile on failure
  */
-BOOL_T tkl_wifi_set_rf_calibrated(void);
+OPERATE_RET tkl_wifi_set_rf_calibrated(void);
 
 /**
  * @brief set wifi lowpower mode
@@ -441,12 +453,6 @@ OPERATE_RET tkl_wifi_register_recv_mgnt_callback(const BOOL_T enable, const WIFI
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
 OPERATE_RET tkl_wifi_ioctl(WF_IOCTL_CMD_E cmd, void *args);
-
-OPERATE_RET tkl_wifi_get_all_sta_info(WF_STA_INFO_S **sta_ary, uint32_t *num);
-
-void *tkl_wifi_station_get_context(void);
-
-void *tkl_wifi_get_configuration(void);
 
 #ifdef __cplusplus
 }

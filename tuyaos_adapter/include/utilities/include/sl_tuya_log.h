@@ -1,5 +1,5 @@
-#ifndef _TKL_LOG_H_
-#define _TKL_LOG_H_
+#ifndef _SL_TUYA_LOG_H_
+#define _SL_TUYA_LOG_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@ enum {
 #define TNLOG_DEBUG_LEVEL LEVEL_OVER_LOGV // DEBUG_LEVEL
 #endif
 
-#define TKL_PRINTF         tkl_printf
+#define SL_TUYA_PRINTF         sl_tuya_printf
 #define TKL_LOG_DATA_INDEX 24
 #define TKL_FILE_NAME      (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
@@ -45,7 +45,7 @@ enum {
             loc_str[loc_sz++] = ']';                                                                                   \
             loc_str[loc_sz++] = ' ';                                                                                   \
             snprintf(&loc_str[loc_sz], sizeof(loc_str), __VA_ARGS__);                                                  \
-            TKL_PRINTF("%s\r\n", loc_str);                                                                             \
+            SL_TUYA_PRINTF("%s\r\n", loc_str);                                                                             \
         }                                                                                                              \
     } while (0)
 
@@ -57,16 +57,16 @@ enum {
 
 typedef int (*log_output_t)(const char *format, ...);
 
-extern log_output_t tkl_printf;
+extern log_output_t sl_tuya_printf;
 
 void log_printhex(char *ss, const uint8_t *buffs, int length);
 
 void log_printhex_no_newline(char *ss, const uint8_t *buffs, int length);
 
-void tkl_log_output_set(log_output_t fn);
+void sl_tuya_log_output_set(log_output_t fn);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _TKL_LOG_H_ */
+#endif /* _SL_TUYA_LOG_H_ */

@@ -34,7 +34,7 @@
 #include "tuya_kconfig.h"
 #include "RTE_Device_917.h"
 #include "tkl_i2c.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "sl_si91x_i2c.h"
 #include "sl_si91x_peripheral_i2c.h"
 

@@ -1,5 +1,5 @@
 /*****************************************************************************//**
- * @file tkl_asr.c
+ * @file sl_tuya_display.c
  * @brief
  *******************************************************************************
  * # License
@@ -31,57 +31,22 @@
 //                                   Includes
 // -----------------------------------------------------------------------------
 
-#include "tkl_asr.h"
+#include "sl_tuya_display.h"
 #include "tuya_cloud_types.h"
 
 // -----------------------------------------------------------------------------
 //                          Public Function Definitions
 // -----------------------------------------------------------------------------
 
-OPERATE_RET tkl_asr_init(void)
+void sl_tuya_display_init(void)
 {
-    return OPRT_OK;
+    /* Display/LCD is not enabled for SiWx917 in this port */
 }
 
-OPERATE_RET tkl_asr_wakeup_word_config(TKL_ASR_WAKEUP_WORD_E *wakeup_word_arr, uint8_t arr_cnt)
+void sl_tuya_display_flush(uint16_t w, uint16_t h, uint8_t *data, uint16_t length)
 {
-    TKL_UNUSED(wakeup_word_arr);
-    TKL_UNUSED(arr_cnt);
-
-    return OPRT_OK;
-}
-
-uint32_t tkl_asr_get_process_uint_size(void)
-{
-    return 2048;
-}
-
-OPERATE_RET tkl_asr_feed(uint8_t *data, uint32_t len)
-{
+    TKL_UNUSED(w);
+    TKL_UNUSED(h);
     TKL_UNUSED(data);
-    TKL_UNUSED(len);
-
-    return OPRT_OK;
-}
-
-OPERATE_RET tkl_asr_reset(void)
-{
-    return OPRT_OK;
-}
-
-OPERATE_RET tkl_asr_rdiscard(uint32_t n_frame)
-{
-    TKL_UNUSED(n_frame);
-
-    return OPRT_OK;
-}
-
-TKL_ASR_WAKEUP_WORD_E tkl_asr_recognize_wakeup_word(void)
-{
-    return TKL_ASR_WAKEUP_WORD_UNKNOWN;
-}
-
-OPERATE_RET tkl_asr_deinit(void)
-{
-    return OPRT_OK;
+    TKL_UNUSED(length);
 }

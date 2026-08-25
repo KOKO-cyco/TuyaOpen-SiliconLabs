@@ -29,7 +29,7 @@ OPERATE_RET tkl_ble_stack_deinit(uint8_t role);
 
 /**
  * @brief   Function for getting the GATT Link-Support.
- * @param   p_link              return gatt link                 
+ * @param   p_link              return gatt link
  * @return  SUCCESS             Support Gatt Link
  *          ERROR               Only Beacon or Mesh Beacon, Not Support Gatt Link.
  * */
@@ -191,6 +191,18 @@ OPERATE_RET tkl_ble_gap_name_set(char *p_name);
 OPERATE_RET tkl_ble_gatts_service_add(TKL_BLE_GATTS_PARAMS_T *p_service);
 
 /**
+ * @brief   [Optional] Indicates a change in attribute assignment to all subscribed peers(Specify conn_handle).
+ *
+ * @param   [in] conn_handle    Connection handle.
+ * @param   [in] start_handle   The start of the affected handle range.
+ * @param   [in] end_handle     The end of the affected handle range.
+ *
+ * @return  SUCCESS
+ *          ERROR
+ * */
+OPERATE_RET tkl_ble_gatts_service_change(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle);
+
+/**
  * @brief   Set the value of a given attribute. After Config Tuya Read-Char, we can update read-value at any time.
  * @param   [in] conn_handle    Connection handle.
  *          [in] char_handle    Attribute handle.
@@ -346,6 +358,15 @@ OPERATE_RET tkl_ble_gattc_exchange_mtu_request(uint16_t conn_handle, uint16_t cl
  *          ERROR
  * */
 OPERATE_RET tkl_ble_vendor_command_control(uint16_t opcode, void *user_data, uint16_t data_len);
+
+/**
+ * @brief set ble mode, used in wifi ble coexist mode
+ *
+ * @param[in]       enable     enbale mode
+ * @param[in]       mode       the ble mode
+ * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
+ */
+OPERATE_RET tkl_ble_set_mode(const BOOL_T enable, const uint8_t mode);
 
 #ifdef __cplusplus
 }

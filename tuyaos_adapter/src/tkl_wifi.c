@@ -49,11 +49,12 @@
 #include "tuya_error_code.h"
 #include "tuya_cloud_types.h"
 
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "tkl_memory.h"
 #include "tkl_output.h"
 #include "tkl_system.h"
 #include "tkl_wifi.h"
+#include "sl_tuya_wifi.h"
 
 #include "lwip/apps/dhcpserver.h"
 #include "lwip/dhcp.h"
@@ -1007,7 +1008,7 @@ OPERATE_RET tkl_wifi_get_ip(const WF_IF_E wf, NW_IP_S *ip)
  * @param[in]       ip     the ip addr info
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tkl_wifi_set_ip(WF_IF_E wf, NW_IP_S *ip)
+OPERATE_RET tkl_wifi_set_ip(const WF_IF_E wf, NW_IP_S *ip)
 {
     TKL_UNUSED(wf);
     TKL_UNUSED(ip);
@@ -1200,7 +1201,7 @@ OPERATE_RET tkl_wifi_set_country_code(const COUNTRY_CODE_E ccode)
  *
  * @return true on success. faile on failure
  */
-BOOL_T tkl_wifi_set_rf_calibrated(void)
+OPERATE_RET tkl_wifi_set_rf_calibrated(void)
 {
     return OPRT_NOT_SUPPORTED;
 }
@@ -1418,20 +1419,25 @@ OPERATE_RET tkl_wifi_ioctl(WF_IOCTL_CMD_E cmd, void *args)
     return OPRT_NOT_SUPPORTED;
 }
 
-OPERATE_RET tkl_wifi_get_all_sta_info(WF_STA_INFO_S **sta_ary, uint32_t *num)
+/**
+ * @brief get wifi ipv6 info.when wifi works in
+ *        ap+station mode, wifi has two ips.
+ *
+ * @param[in]       wf          wifi function type
+ * @param[in]       type        wifi ip type
+ * @param[out]      ip          the ip addr info
+ * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
+ */
+OPERATE_RET tkl_wifi_get_ipv6(const WF_IF_E wf, NW_IP_TYPE type, NW_IP_S *ip)
 {
-    TKL_UNUSED(num);
-    TKL_UNUSED(sta_ary);
+    TKL_UNUSED(wf);
+    TKL_UNUSED(type);
+    TKL_UNUSED(ip);
 
     return OPRT_NOT_SUPPORTED;
 }
 
-void *tkl_wifi_station_get_context(void)
-{
-    return &g_wifi_sta_context;
-}
-
-void *tkl_wifi_get_configuration(void)
+void *sl_tuya_wifi_get_configuration(void)
 {
     return &g_wifi_config;
 }

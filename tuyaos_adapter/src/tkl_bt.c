@@ -44,7 +44,7 @@
 #include "tuya_cloud_types.h"
 #include "tkl_bluetooth.h"
 #include "tkl_hci.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "tkl_memory.h"
 #include "tkl_output.h"
 #include "tkl_system.h"

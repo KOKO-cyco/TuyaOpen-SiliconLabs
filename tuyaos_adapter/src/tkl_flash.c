@@ -36,7 +36,7 @@
 
 #include "tuya_error_code.h"
 #include "tkl_flash.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "tuyaopen_license.h"
 
 // -----------------------------------------------------------------------------

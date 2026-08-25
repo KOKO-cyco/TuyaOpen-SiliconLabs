@@ -70,9 +70,8 @@ set(ADAPTER_SRC
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_network.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_ota.c"  
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_vad.c"
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_asr.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_kws.c"
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_display.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/sl_tuya_display.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_symmetry.c"
 )
 

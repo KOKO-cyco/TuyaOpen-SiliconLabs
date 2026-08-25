@@ -140,6 +140,193 @@ typedef struct {
     uint32_t enable; // 1,enable.0,disable
 } TKL_AUDIO_VQE_PARAM_T;
 
+/**
+ * @brief ai init
+ *
+ * @param[in] pconfig: audio config
+ * @param[in] count: count of pconfig
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_init(TKL_AUDIO_CONFIG_T *pconfig, int32_t count);
+
+/**
+ * @brief ai start
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_start(int32_t card, TKL_AI_CHN_E chn);
+
+/**
+ * @brief ai set mic volume
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] vol: mic volume,[0, 100]
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_set_vol(int32_t card, TKL_AI_CHN_E chn, int32_t vol);
+
+/**
+ * @brief ai get frame
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[out] pframe: audio frame, pframe->pbuf allocated by upper layer application
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_get_frame(int32_t card, TKL_AI_CHN_E chn, TKL_AUDIO_FRAME_INFO_T *pframe);
+
+/**
+ * @brief ai set vqe param
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] type: vqe type
+ * @param[in] pparam: vqe param
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_set_vqe(int32_t card, TKL_AI_CHN_E chn, TKL_AUDIO_VQE_TYPE_E type, TKL_AUDIO_VQE_PARAM_T *pparam);
+
+/**
+ * @brief ai get vqe param
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] type: vqe type
+ * @param[out] pparam: vqe param
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_get_vqe(int32_t card, TKL_AI_CHN_E chn, TKL_AUDIO_VQE_TYPE_E type, TKL_AUDIO_VQE_PARAM_T *pparam);
+
+/**
+ * @brief ai stop
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_stop(int32_t card, TKL_AI_CHN_E chn);
+
+/**
+ * @brief ai uninit
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_uninit(void);
+
+/**
+ * @brief ao init
+ *
+ * @param[in] pconfig: audio config
+ * @param[in] count: config count
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_init(TKL_AUDIO_CONFIG_T *pconfig, int32_t count, void **handle);
+
+/**
+ * @brief ao start
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[out] handle: handle of start
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_start(int32_t card, TKL_AO_CHN_E chn, void *handle);
+
+/**
+ * @brief ao set volume
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] vol: mic volume,[0, 100]
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_set_vol(int32_t card, TKL_AO_CHN_E chn, void *handle, int32_t vol);
+
+/**
+ * @brief ao get volume
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] vol: mic volume,[0, 100]
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_get_vol(int32_t card, TKL_AO_CHN_E chn, void *handle, int32_t *vol);
+
+/**
+ * @brief ao output frame
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] handle: handle of start
+ * @param[in] pframe: output frame
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_put_frame(int32_t card, TKL_AO_CHN_E chn, void *handle, TKL_AUDIO_FRAME_INFO_T *pframe);
+
+/**
+ * @brief ao stop
+ *
+ * @param[in] card: card number
+ * @param[in] chn: channel number
+ * @param[in] handle: handle of start
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_stop(int32_t card, TKL_AO_CHN_E chn, void *handle);
+
+/**
+ * @brief ao uninit
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ao_uninit(void *handle);
+
+/**
+ * @brief audio input detect start
+ *
+ * @param[in] card: card number
+ * @param[in] type: detect type
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_detect_start(int32_t card, TKL_MEDIA_DETECT_TYPE_E type);
+
+/**
+ * @brief audio input detect stop
+ *
+ * @param[in] card: card number
+ * @param[in] type: detect type
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_detect_stop(int32_t card, TKL_MEDIA_DETECT_TYPE_E type);
+
+/**
+ * @brief audio detect get result
+ *
+ * @param[in] card: card number
+ * @param[in] type: detect type
+ * @param[out] presult: audio detect result
+ *
+ * @return OPRT_OK on success. Others on error, please refer to tkl_error_code.h
+ */
+OPERATE_RET tkl_ai_detect_get_result(int32_t card, TKL_MEDIA_DETECT_TYPE_E type, TKL_AUDIO_DETECT_RESULT_T *presult);
+
 #ifdef __cplusplus
 }
 #endif

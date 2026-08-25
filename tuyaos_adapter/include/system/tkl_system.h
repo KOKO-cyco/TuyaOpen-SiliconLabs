@@ -121,10 +121,6 @@ void tkl_system_delay(uint32_t num_ms);
 
 OPERATE_RET tkl_system_get_cpu_info(TUYA_CPU_INFO_T **cpu_ary, int *cpu_cnt);
 
-void tkl_system_timer_init(void);
-
-void tkl_system_print_task_stats(void);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

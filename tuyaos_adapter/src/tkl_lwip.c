@@ -37,7 +37,7 @@
 #include "sl_wifi.h"
 
 #include "tuya_error_code.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "tkl_lwip.h"
 #include "tkl_wifi.h"
 

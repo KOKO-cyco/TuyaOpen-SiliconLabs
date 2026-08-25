@@ -1,10 +1,3 @@
-/**
- * @file tkl_i2s.h
- * @brief tkl_i2s module is used to
- * @version 0.1
- * @date 2025-04-15
- */
-
 #ifndef __TKL_I2S_H__
 #define __TKL_I2S_H__
 
@@ -14,19 +7,6 @@
 extern "C" {
 #endif
 
-/***********************************************************
-************************macro define************************
-***********************************************************/
-
-/***********************************************************
-***********************typedef define***********************
-***********************************************************/
-
-typedef void (*tkl_i2s_buffer_ready_callback_t)(void *args, void *buffer, uint32_t n_frames);
-
-/***********************************************************
-********************function declaration********************
-***********************************************************/
 /**
  * @brief tuya i2s init
  *
@@ -88,14 +68,8 @@ OPERATE_RET tkl_i2s_recv_stop(TUYA_I2S_NUM_E i2s_num);
 
 OPERATE_RET tkl_i2s_deinit(TUYA_I2S_NUM_E i2s_num);
 
-OPERATE_RET tkl_i2s_set_streaming_config(TUYA_I2S_NUM_E i2s_num, void *buff, uint32_t n_frames);
-OPERATE_RET tkl_i2s_get_streaming_config(TUYA_I2S_NUM_E i2s_num, void **buff, uint32_t *n_frames);
-OPERATE_RET tkl_i2s_recv_streaming(TUYA_I2S_NUM_E i2s_num, tkl_i2s_buffer_ready_callback_t callback, void *args);
-
-bool tkl_i2s_send_inprogress(TUYA_I2S_NUM_E i2s_num);
-
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
-#endif /* __TKL_I2S_H__ */
+#endif // __TKL_I2S_H__

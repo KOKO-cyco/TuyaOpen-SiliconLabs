@@ -48,7 +48,9 @@
 
 #include "tuya_cloud_types.h"
 #include "tal_api.h"
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
+#include "sl_tuya_system.h"
+#include "sl_tuya_wifi.h"
 #include "tkl_memory.h"
 #include "tkl_system.h"
 #include "tkl_uart.h"
@@ -125,12 +127,12 @@ static void app_main_handle(void *arg)
     cpu_clock_set(SOC_PLL_CLK);
 
 #if TKL_ULP_TIMER_SYSTICK_ENABLE
-    tkl_system_timer_init();
+    sl_tuya_system_timer_init();
 #endif
 
     tkl_uart_init(TUYA_UART_NUM_0, &base_cfg);
 
-    wifi_config = (sl_wifi_device_configuration_t *)tkl_wifi_get_configuration();
+    wifi_config = (sl_wifi_device_configuration_t *)sl_tuya_wifi_get_configuration();
 
     status = sl_wifi_init(wifi_config, NULL, sl_wifi_default_event_handler);
     if (status != SL_STATUS_OK) {
@@ -164,7 +166,7 @@ static void app_main_handle(void *arg)
     tkl_system_sleep(3000);
 
     TKL_LOGI("Running TuyaOpen application [%d]", (int)(tkl_system_get_millisecond() - ms));
-    tkl_log_output_set(tal_log_print_raw);
+    sl_tuya_log_output_set(tal_log_print_raw);
     tuya_app_main();
     tal_thread_delete(app_main_thread);
     app_main_thread    = NULL;

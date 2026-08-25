@@ -32,6 +32,7 @@
 // -----------------------------------------------------------------------------
 
 #include "tkl_i2s.h"
+#include "sl_tuya_i2s.h"
 
 #include "rsi_i2s.h"
 #include "rsi_rom_udma_wrapper.h"
@@ -40,7 +41,7 @@
 #include "sl_si91x_dma.h"
 #include "sl_si91x_i2s.h"
 
-#include "tkl_log.h"
+#include "sl_tuya_log.h"
 #include "tkl_system.h"
 
 // -----------------------------------------------------------------------------
@@ -72,7 +73,7 @@ typedef struct {
     sl_i2s_signal_event_t           event_handler;
     sl_i2s_dma_event_handler_t      dma_event_handler;
     sl_i2s_sample_buffer_t          rx_buffer;
-    tkl_i2s_buffer_ready_callback_t callback;
+    sl_tuya_i2s_buffer_ready_callback_t callback;
     void                           *args;
     uint32_t                        n_frames;
     int16_t                         dma_buffer[N_FRAMES_PER_CALLBACK * 2];
@@ -425,7 +426,7 @@ int tkl_i2s_recv(TUYA_I2S_NUM_E i2s_num, void *buff, uint32_t len)
     return bytes_read;
 }
 
-OPERATE_RET tkl_i2s_set_streaming_config(TUYA_I2S_NUM_E i2s_num, void *buff, uint32_t n_frames)
+OPERATE_RET sl_tuya_i2s_set_streaming_config(TUYA_I2S_NUM_E i2s_num, void *buff, uint32_t n_frames)
 {
     uint8_t  n_channels;
     uint32_t sample_length;
@@ -445,7 +446,7 @@ OPERATE_RET tkl_i2s_set_streaming_config(TUYA_I2S_NUM_E i2s_num, void *buff, uin
     return OPRT_OK;
 }
 
-OPERATE_RET tkl_i2s_get_streaming_config(TUYA_I2S_NUM_E i2s_num, void **buff, uint32_t *n_frames)
+OPERATE_RET sl_tuya_i2s_get_streaming_config(TUYA_I2S_NUM_E i2s_num, void **buff, uint32_t *n_frames)
 {
     *buff     = sg_i2s_hdl[i2s_num].rx_buffer.base;
     *n_frames = sg_i2s_hdl[i2s_num].n_frames;
@@ -453,7 +454,7 @@ OPERATE_RET tkl_i2s_get_streaming_config(TUYA_I2S_NUM_E i2s_num, void **buff, ui
     return OPRT_OK;
 }
 
-OPERATE_RET tkl_i2s_recv_streaming(TUYA_I2S_NUM_E i2s_num, tkl_i2s_buffer_ready_callback_t callback, void *args)
+OPERATE_RET sl_tuya_i2s_recv_streaming(TUYA_I2S_NUM_E i2s_num, sl_tuya_i2s_buffer_ready_callback_t callback, void *args)
 {
     OPERATE_RET rt = OPRT_OK;
     sl_status_t status;
@@ -476,7 +477,7 @@ OPERATE_RET tkl_i2s_recv_streaming(TUYA_I2S_NUM_E i2s_num, tkl_i2s_buffer_ready_
     return rt;
 }
 
-bool tkl_i2s_send_inprogress(TUYA_I2S_NUM_E i2s_num)
+bool sl_tuya_i2s_send_inprogress(TUYA_I2S_NUM_E i2s_num)
 {
     return sg_i2s_hdl[i2s_num].tx_flag;
 }
