@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# coding=utf-8
+
 import sys
 import os
 
@@ -64,6 +67,57 @@ maps = [
         "component": [
             {
                 "name":   "sl_i2c",
+                "extension": "wiseconnect3_sdk",
+            }
+        ],
+        "configuration": [
+        ]
+    },
+    {
+        # tkl_rtc.c drives the NPSS calendar block. sl_calendar pulls in
+        # systemlevel_rtc and systemlevel_time_period itself, so listing the
+        # unified-API component alone is enough.
+        "name": "CONFIG_ENABLE_RTC",
+        "component": [
+            {
+                "name":   "sl_calendar",
+                "extension": "wiseconnect3_sdk",
+            }
+        ],
+        "configuration": [
+        ]
+    },
+    {
+        # tkl_pwm.c drives the MCPWM block. sl_pwm brings rsilib_pwm and
+        # romdriver_pwm with it, so the unified-API component is enough.
+        "name": "CONFIG_ENABLE_PWM",
+        "component": [
+            {
+                "name":   "sl_pwm",
+                "extension": "wiseconnect3_sdk",
+            }
+        ],
+        "configuration": [
+        ]
+    },
+    {
+        # tkl_adc.c drives the AUX ADC in static (one-shot) mode.
+        "name": "CONFIG_ENABLE_ADC",
+        "component": [
+            {
+                "name":   "sl_adc",
+                "extension": "wiseconnect3_sdk",
+            }
+        ],
+        "configuration": [
+        ]
+    },
+    {
+        # tkl_dac.c drives the AUX DAC in static mode.
+        "name": "CONFIG_ENABLE_DAC",
+        "component": [
+            {
+                "name":   "sl_dac",
                 "extension": "wiseconnect3_sdk",
             }
         ],
