@@ -213,9 +213,30 @@ add_custom_command(
 )
 
 if(PLATFORM_NEED_LIBS)
-    message(STATUS "++++ LIBS_LIST: ${LIBS_LIST}")
     string(REPLACE " " ";" LIBS_LIST "${PLATFORM_NEED_LIBS}")
+    message(STATUS "++++ LIBS_LIST: ${LIBS_LIST}")
     target_link_libraries(${CONFIG_PROJECT_NAME}
         ${LIBS_LIST}
     )
+
+    # These arrive as bare names ("tuyaapp tuyaos"), so CMake emits -ltuyaapp
+    # and nothing more: not a CMake target, not an absolute path, therefore no
+    # dependency edge in the generated ninja file. Rebuilding libtuyaapp.a --
+    # which is what happens every time application code changes -- then leaves
+    # this executable untouched, and the build reports success while the image
+    # still holds the previous application. Flashing that is indistinguishable
+    # from the flash not having worked.
+    #
+    # Naming the archives as link dependencies restores the edge without
+    # disturbing link order, which the -l flags above still decide. Guarded on
+    # EXISTS because a first configure runs before the libraries are built, and
+    # a LINK_DEPENDS on a file with no rule to make it is a hard ninja error;
+    # by the second build they are there, which is when staleness can occur.
+    foreach(_lib ${LIBS_LIST})
+        set(_lib_path "${OPEN_LIBS_DIR}/lib${_lib}.a")
+        if(EXISTS "${_lib_path}")
+            set_property(TARGET ${CONFIG_PROJECT_NAME}
+                         APPEND PROPERTY LINK_DEPENDS "${_lib_path}")
+        endif()
+    endforeach()
 endif()
