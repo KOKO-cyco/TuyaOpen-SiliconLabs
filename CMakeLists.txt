@@ -41,20 +41,29 @@ else()
     set(CONFIG_ENABLE_WIRED OFF)
 endif()
 
-file(GLOB_RECURSE UTILITIES_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/*.c")
+set(UTILITIES_SRC
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tkl_log.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_hashmap.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_list.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_mem_heap.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_queue.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_ringbuf.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_smartpointer.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/src/tuya_tools.c"
+)
 set(ADAPTER_SRC
-    "${CMAKE_SOURCE_DIR}/mcu/src/app_tuya.c" 
+    "${CMAKE_SOURCE_DIR}/mcu/src/app_tuya.c"
     "${CMAKE_SOURCE_DIR}/mcu/src/startup-gcc.c"
     "${CMAKE_SOURCE_DIR}/mcu/src/syscalls.c"
     "${CMAKE_SOURCE_DIR}/mcu/src/psram_heap_4.c"
 
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_output.c"  
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_system.c" 
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_sleep.c" 
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_memory.c"  
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_mutex.c" 
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_semaphore.c" 
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_queue.c"  
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_output.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_system.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_sleep.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_memory.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_mutex.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_semaphore.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_queue.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_thread.c"
 
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_gpio.c"
@@ -68,7 +77,7 @@ set(ADAPTER_SRC
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_fs.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_lwip.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_network.c"
-    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_ota.c"  
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_ota.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_vad.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_asr.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_kws.c"
@@ -82,12 +91,28 @@ if(CONFIG_MP3_DECODER_STATIC_BUF STREQUAL "y")
     list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/mcu/src/mp3_internal_pool.c")
 endif()
 
+if(CONFIG_ENABLE_RTC STREQUAL "y")
+    list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_rtc.c")
+endif()
+
+if(CONFIG_ENABLE_PWM STREQUAL "y")
+    list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_pwm.c")
+endif()
+
+if(CONFIG_ENABLE_ADC STREQUAL "y")
+    list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_adc.c")
+endif()
+
+if(CONFIG_ENABLE_DAC STREQUAL "y")
+    list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_dac.c")
+endif()
+
 set(INIT_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/init/src/tkl_init_common.c")
 
 if(CONFIG_ENABLE_WIFI)
     set(WIFI_SRC
         "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_wifi.c")
-    list(APPEND INIT_SRC 
+    list(APPEND INIT_SRC
         "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/init/src/tkl_init_wifi.c")
 
     # tkl_wifi.c calls dhcps_start/stop/set_new_lease_cb for SoftAP; pull in
@@ -95,7 +120,7 @@ if(CONFIG_ENABLE_WIFI)
     # Declared in boards/SiWx917/TKL_Kconfig, not src/liblwip, since no other
     # platform references these symbols.
     if(CONFIG_ENABLE_LWIP_DHCPD STREQUAL "y")
-        set(DHCPD_SRC "${CMAKE_SOURCE_DIR}/../../src/liblwip/lwip-2.1.2/src/apps/dhcpserver/dhcpserver.c")
+        set(DHCPD_SRC "${OPEN_ROOT}/src/liblwip/lwip-2.1.2/src/apps/dhcpserver/dhcpserver.c")
         list(APPEND WIFI_SRC ${DHCPD_SRC})
         # Vendor lwIP code isn't written to satisfy this SLC project's
         # -Wall -Werror; src/liblwip/CMakeLists.txt applies the same -w to it.
@@ -104,63 +129,46 @@ if(CONFIG_ENABLE_WIFI)
 endif()
 
 if(CONFIG_ENABLE_BLUETOOTH)
-    file(GLOB_RECURSE BT_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_bt.c")
+    set(BT_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_bt.c")
 endif()
 
 if(CONFIG_ENABLE_WIRED)
     list(APPEND INIT_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/init/src/tkl_init_wired.c")
 endif()
 
-set(OS_ADAPTER_SOURCES 
-    ${UTILITIES_SRC} 
-    ${ADAPTER_SRC} 
+set(OS_ADAPTER_SOURCES
+    ${UTILITIES_SRC}
+    ${ADAPTER_SRC}
     ${INIT_SRC}
     ${WIFI_SRC}
     ${BT_SRC}
 )
 
-file(GLOB_RECURSE ADAPTER_INCLUDE_SUB_DIRS LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/*")
-list(FILTER ADAPTER_INCLUDE_SUB_DIRS INCLUDE REGEX ".*/$")
-foreach(dir ${ADAPTER_INCLUDE_SUB_DIRS})
-    if(IS_DIRECTORY ${dir})
-        include_directories(${dir})
+# Every non-hidden directory under tuyaos_adapter/include is an include path.
+# Collected here rather than hand-listed: the previous form globbed with
+# LIST_DIRECTORIES and then filtered on a ".*/$" regex, which never matches --
+# CMake glob results carry no trailing slash -- so that loop was a no-op and a
+# hand-maintained list did the real work. Five of its entries (adc, pwm, rtc,
+# watchdog, wired) plus mcu/component named directories that do not exist; -I
+# on a missing path is silently dropped, so nothing ever complained.
+file(GLOB_RECURSE ADAPTER_INCLUDE_ENTRIES LIST_DIRECTORIES true
+     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/*")
+set(ADAPTER_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include")
+foreach(entry ${ADAPTER_INCLUDE_ENTRIES})
+    if(IS_DIRECTORY "${entry}")
+        get_filename_component(entry_name "${entry}" NAME)
+        if(NOT entry_name MATCHES "^\\.")
+            list(APPEND ADAPTER_INCLUDE_DIRS "${entry}")
+        endif()
     endif()
 endforeach()
 
-get_target_property(SLCC_INCLUDE_DIRS  ${TUYAOPEN_PLATFORM_SIWX917} INCLUDE_DIRECTORIES)
+get_target_property(SLCC_INCLUDE_DIRS ${TUYAOPEN_PLATFORM_SIWX917} INCLUDE_DIRECTORIES)
 
 include_directories(
     ${SLCC_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/mcu/component
     ${CMAKE_SOURCE_DIR}/mcu/src
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/adc
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/asr
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/bluetooth
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/config
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/display
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/flash
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/gpio
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/hci
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/i2c
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/i2s
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/init/include
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/kws
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/media
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/network
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/pinmux
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/pwm
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/rtc
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/security
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/spi
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/system
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/timer
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/uart
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/utilities/include
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/vad
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/watchdog
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/wifi
-    ${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/wired
+    ${ADAPTER_INCLUDE_DIRS}
 )
 
 if(EXISTS ${OPEN_ROOT}/boards/SiWx917/common/CMakeLists.txt)

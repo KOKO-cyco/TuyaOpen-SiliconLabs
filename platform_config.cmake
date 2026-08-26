@@ -72,7 +72,9 @@ if(CONFIG_MP3_DECODER_STATIC_BUF STREQUAL "y" AND CONFIG_ENABLE_AI_PLAYER STREQU
             "-include;${PLATFORM_PATH}/mcu/include/mp3_malloc_platform.h")
 endif()
 
-set(CMAKE_BUILD_TYPE Release)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
 # WARNING: Changing CMAKE_BUILD_TYPE from Release to Debug may significantly impact
 # performance on the SiWx917 platform, potentially causing voice quality degradation,
@@ -90,8 +92,10 @@ endif()
 # it through tos.py would mean adding a fifth positional argument to a
 # build_setup signature that every platform shares. Re-running is cheap:
 # script/generate skips an output dir that already exists.
+find_program(SIWX917_PYTHON NAMES python3 python REQUIRED)
+
 execute_process(
-    COMMAND ${CMAKE_COMMAND} -E env python slc_generate.py
+    COMMAND "${SIWX917_PYTHON}" slc_generate.py
             "${CONFIG_PROJECT_NAME}" "${CMAKE_CURRENT_BINARY_DIR}"
     WORKING_DIRECTORY "${PLATFORM_PATH}"
     RESULT_VARIABLE SLC_GENERATE_RESULT)
@@ -123,4 +127,4 @@ target_compile_definitions(si91x_sdk_includes
 )
 
 # Export to global scope (no PARENT_SCOPE at root level)
-set(PLATFORM_SI91X_SDK_INCLUCES si91x_sdk_includes CACHE INTERNAL "Platform Si91x SDK includes")
+set(PLATFORM_SI91X_SDK_INCLUDES si91x_sdk_includes CACHE INTERNAL "Platform Si91x SDK includes")
