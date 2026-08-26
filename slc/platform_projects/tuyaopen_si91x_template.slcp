@@ -72,32 +72,17 @@ component:
     from: wiseconnect3_sdk
   - id: sl_gpio
     from: wiseconnect3_sdk
-  - id: sl_gspi
-    from: wiseconnect3_sdk
-  - instance: [i2s0]
-    from: wiseconnect3_sdk
-    id: i2s_instance
-  - id: sl_ssi
-    from: wiseconnect3_sdk
-  - instance: [primary]
-    from: wiseconnect3_sdk
-    id: sl_ssi_instance
-  - instance: [secondary]
-    from: wiseconnect3_sdk
-    id: sl_ssi_instance
-  - instance: [ulp_primary]
-    from: wiseconnect3_sdk
-    id: sl_ssi_instance
 
 requires:
 - {name: device_needs_ram_execution}
 
 configuration:
-- {name: configTOTAL_HEAP_SIZE, value: '131072'}
-- {name: SL_GSPI_DMA_CONFIG_ENABLE, value: '1'}
-- {name: GSPI_UC, value: '0'}
 
 define:
+  - name: WIFI_INIT_MODE_STA
+    value: 1
+  - name: TKL_ULP_TIMER_SYSTICK_ENABLE
+    value: 1
   - name: SLI_SI91X_ENABLE_IPV6
     value: 1
   - name: SUPPORT_CPLUSPLUS
@@ -107,7 +92,7 @@ define:
 
 toolchain_settings:
 - {value: -Wall -Werror, option: gcc_compiler_option}
-- {value: -Wno-unused-parameter, option: gcc_compiler_option}
+- {value: -Wno-unused-parameter -Wno-error=array-bounds -Wno-error=stringop-truncation, option: gcc_compiler_option}
 - {value: -mfp16-format=ieee, option: gcc_compiler_option}
 - {value: -Wno-missing-field-initializers, option: gcc_compiler_option}
 - {value: -u _printf_float, option: gcc_linker_option}
