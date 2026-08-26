@@ -1,14 +1,18 @@
 CatalogKconfig
 *.build/
-build
-tools
-sdks
-TuyaOpen
-.prepare
 *__pycache__*
-# Local recovery/debugging tool, deliberately not shipped: the knowledge it
-# carried (ROM bootloader menu keys, the C-Kermit settings the ROM receiver
-# needs) is in GETTING_STARTED.md instead, which is the part that cannot be
-# re-derived. Keep your own copy here if you use it.
-script/siwx917_kermit.sh
-script/siwx917-logs/
+
+# Anchored: these are the top-level dirs/files this platform generates or
+# fetches. Unanchored they would also swallow any nested dir of the same name
+# (mcu/tools/, a future sdks/ under a component, ...).
+/build
+/tools
+/sdks
+/TuyaOpen
+/.prepare
+
+# Local recovery/debugging tool, deliberately not shipped; what it knew (ROM
+# bootloader menu keys, the C-Kermit settings the ROM receiver needs) is in
+# GETTING_STARTED.md instead.
+/script/siwx917_kermit.sh
+/script/siwx917-logs/

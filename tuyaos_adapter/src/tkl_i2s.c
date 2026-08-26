@@ -165,11 +165,6 @@ void _tkl_i2s0_dma_event_handler(uint32_t event, uint32_t ch)
     _tkl_i2s_dma_event_handler(TUYA_I2S_NUM_0, event, ch);
 }
 
-// void _tkl_i2s1_dma_event_handler(uint32_t event, uint32_t ch)
-// {
-//     _tkl_i2s_event_handler(TUYA_I2S_NUM_1, event, ch);
-// }
-
 void _tkl_i2s_event_handler(TUYA_I2S_NUM_E i2s_num, uint32_t event)
 {
     switch (event) {

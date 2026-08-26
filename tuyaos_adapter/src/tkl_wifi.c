@@ -68,6 +68,16 @@
 #include "lwip/tcpip.h"
 #include "lwip/timeouts.h"
 
+#ifdef PRINT_DEBUG_LOG
+/*
+ * Debug-only dumps owned by other translation units: hci_trace_dump() lives in
+ * tkl_bt.c (so PRINT_DEBUG_LOG needs Bluetooth enabled in the build) and
+ * sl_debug_log_dump() in mcu/src/app_tuya.c.
+ */
+extern void hci_trace_dump(void);
+extern void sl_debug_log_dump(void);
+#endif /* PRINT_DEBUG_LOG */
+
 // -----------------------------------------------------------------------------
 //                                Static Variables
 // -----------------------------------------------------------------------------
@@ -143,7 +153,7 @@ static sl_wifi_device_configuration_t g_wifi_config =
     .mac_address = NULL,
     .band        = SL_SI91X_WIFI_BAND_2_4GHZ,
     .region_code = US,
-    .boot_config = 
+    .boot_config =
     {
 #if WIFI_INIT_MODE_STA
         .oper_mode = SL_SI91X_CLIENT_MODE,//SL_SI91X_CONCURRENT_MODE,//SL_SI91X_ACCESS_POINT_MODE,
@@ -157,21 +167,21 @@ static sl_wifi_device_configuration_t g_wifi_config =
         .coex_mode = SL_SI91X_WLAN_ONLY_MODE,
 #endif /* ENABLE_BLUETOOTH */
 
-        .feature_bit_map = (SL_SI91X_FEAT_SECURITY_OPEN 
+        .feature_bit_map = (SL_SI91X_FEAT_SECURITY_OPEN
                             | SL_SI91X_FEAT_AGGREGATION
                             | SL_SI91X_FEAT_ULP_GPIO_BASED_HANDSHAKE
 #ifdef SLI_SI91X_MCU_INTERFACE
                             | SL_SI91X_FEAT_WPS_DISABLE
 #endif
                             ),
-        .tcp_ip_feature_bit_map =  (SL_SI91X_TCP_IP_FEAT_BYPASS 
+        .tcp_ip_feature_bit_map =  (SL_SI91X_TCP_IP_FEAT_BYPASS
                                 //    | SL_SI91X_TCP_IP_FEAT_DHCPV4_CLIENT
                                 //    | SL_SI91X_TCP_IP_FEAT_DNS_CLIENT
                                    | SL_SI91X_TCP_IP_FEAT_EXTENSION_VALID),
         .custom_feature_bit_map     = SL_SI91X_CUSTOM_FEAT_EXTENTION_VALID,
         .ext_custom_feature_bit_map = (SL_SI91X_EXT_FEAT_LOW_POWER_MODE
                                        | SL_SI91X_EXT_FEAT_XTAL_CLK
-                                       | SL_SI91X_EXT_FEAT_UART_SEL_FOR_DEBUG_PRINTS 
+                                       | SL_SI91X_EXT_FEAT_UART_SEL_FOR_DEBUG_PRINTS
                                        | MEMORY_CONFIG
 #if defined(SLI_SI917) || defined(SLI_SI915)
                                        | SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
@@ -188,7 +198,7 @@ static sl_wifi_device_configuration_t g_wifi_config =
                                  | SL_SI91X_BLE_MAX_NBR_CENTRALS(RSI_BLE_MAX_NBR_CENTRALS)
                                  | SL_SI91X_BLE_MAX_NBR_ATT_SERV(RSI_BLE_MAX_NBR_ATT_SERV)
                                  | SL_SI91X_BLE_MAX_NBR_ATT_REC(RSI_BLE_MAX_NBR_ATT_REC))
-                                 | SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID 
+                                 | SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
                                  | SL_SI91X_BLE_PWR_INX(RSI_BLE_PWR_INX)
                                  | SL_SI91X_BLE_PWR_SAVE_OPTIONS(RSI_BLE_PWR_SAVE_OPTIONS)
                                  | SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
@@ -226,7 +236,7 @@ static sl_wifi_device_configuration_t g_wifi_config =
         .ble_feature_bit_map     = 0,
         .ble_ext_feature_bit_map = 0,
 #endif /* ENABLE_BLUETOOTH */
-        .config_feature_bit_map = (SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP 
+        .config_feature_bit_map = (SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
                                   | SL_SI91X_ENABLE_ENHANCED_MAX_PSP)
     }
 };
@@ -532,46 +542,18 @@ static void _tkl_wifi_ap_linkdown(void)
 }
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
+/*
+ * Registered so lwIP's ext-callback slot belongs to this adapter, but
+ * deliberately a no-op: link and address transitions are reported upward
+ * through the tkl_wifi event callbacks, not from here. The IPv6/link-status
+ * bodies this used to carry were commented out, not implemented.
+ */
 static void _platform_netif_ext_callback_function(struct netif *netif, netif_nsc_reason_t reason,
                                                   const netif_ext_callback_args_t *args)
 {
+    LWIP_UNUSED_ARG(netif);
+    LWIP_UNUSED_ARG(reason);
     LWIP_UNUSED_ARG(args);
-
-    // TKL_LOGD("netif %c%c reason %x", netif->name[0], netif->name[1], reason);
-    if (reason == LWIP_NSC_IPV6_ADDR_STATE_CHANGED) {
-        // char              addrStr[46] = {0};
-        // uint8_t           idx         = args->ipv6_addr_state_changed.addr_index;
-        // const ip6_addr_t *addr        = (ip6_addr_t *)&netif->ip6_addr[idx];
-
-        // /* Link local */
-        // if (idx == 0 && netif == netif_default)
-        // {
-        // }
-
-        // if (ip6addr_ntoa_r(addr, addrStr, sizeof(addrStr)) != NULL)
-        // {
-        //             TKL_LOGD("%c%c IP6[%d]: %s state %02x->%02x"
-        // #if LWIP_IPV6_SCOPES
-        //                      " zone %d"
-        // #endif
-        //                      ,
-        //                      netif->name[0],
-        //                      netif->name[1],
-        //                      idx,
-        //                      addrStr,
-        //                      args->ipv6_addr_state_changed.old_state,
-        //                      netif_ip6_addr_state(netif, idx),
-        // #if LWIP_IPV6_SCOPES
-        //                      addr->zone
-        // #endif
-        //             );
-        // }
-    } else if (reason == LWIP_NSC_STATUS_CHANGED && netif == netif_default) {
-        if (args->status_changed.state) {
-            /* WiFi client network up */
-        } else {
-        }
-    }
 }
 #endif /* LWIP_NETIF_EXT_STATUS_CALLBACK */
 
@@ -607,9 +589,6 @@ static OPERATE_RET _tkl_wifi_scan_prepare_retry(sl_status_t status)
     }
 
 #ifdef PRINT_DEBUG_LOG
-    extern void hci_trace_dump(void);
-    extern void sl_debug_log_dump(void);
-
     sl_debug_log_dump();
     hci_trace_dump();
 
@@ -1066,7 +1045,6 @@ OPERATE_RET tkl_wifi_get_mac(const WF_IF_E wf, NW_MAC_S *mac)
 OPERATE_RET tkl_wifi_set_work_mode(const WF_WK_MD_E mode)
 {
     assert(mode < WWM_UNKNOWN);
-    // sl_status_t status;
 
     TKL_LOGD("wifi_set_work_mode %d", mode);
     if (mode == g_wifi_work_mode) {
@@ -1099,20 +1077,6 @@ OPERATE_RET tkl_wifi_set_work_mode(const WF_WK_MD_E mode)
     default:
         return OPRT_COM_ERROR;
     }
-
-    // if (sl_si91x_is_device_initialized()) {
-    //     status = sl_wifi_deinit();
-    //     if (status != SL_STATUS_OK) {
-    //         TKL_LOGD("sl_wifi_deinit error %lx", status);
-    //         return OPRT_COM_ERROR;
-    //     }
-    // }
-
-    // status = sl_wifi_init(&g_wifi_config, NULL, sl_wifi_default_event_handler);
-    // if (status != SL_STATUS_OK) {
-    //     TKL_LOGD("sl_wifi_init error %lx", status);
-    //     return OPRT_COM_ERROR;
-    // }
 
     g_wifi_work_mode = mode;
 

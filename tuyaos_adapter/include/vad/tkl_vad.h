@@ -1,6 +1,6 @@
 /**
  * @file tkl_vad.h
- * @brief tkl_vad module is used to 
+ * @brief tkl_vad module is used to
  * @version 0.1
  * @date 2025-04-15
  */

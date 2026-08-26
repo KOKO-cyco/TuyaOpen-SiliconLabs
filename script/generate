@@ -160,7 +160,7 @@ patch_linkerfile()
 overwrite_linkerfile()
 {
     local tuyaopen_linker_file="${script_dir}/../mcu/defaults/linkerfile_psram_SoC.ld"
-    local switch_demo_linker_file="${script_dir}/../mcu/defaults/linkerfile_switch_demo.ld" 
+    local switch_demo_linker_file="${script_dir}/../mcu/defaults/linkerfile_switch_demo.ld"
     local linker_file=""
 
     if [[ $2 == *switch_demo* ]]; then
@@ -177,7 +177,7 @@ overwrite_linkerfile()
     echo "======================================================================"
     echo "Uses linker file ${tuyaopen_linker_file}"
     cp ${tuyaopen_linker_file} ${linker_file}
-    echo "======================================================================"      
+    echo "======================================================================"
 }
 
 generate()

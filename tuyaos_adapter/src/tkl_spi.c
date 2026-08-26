@@ -554,17 +554,9 @@ OPERATE_RET tkl_spi_irq_disable(TUYA_SPI_NUM_E port)
  */
 int32_t tkl_spi_get_data_count(TUYA_SPI_NUM_E port)
 {
-    uint32_t count = 0;
-    // if (port >= MAX_PORT_SUPPORTED) {
-    //     return -1;
-    // }
-    // count = sl_si91x_ssi_get_rx_data_count(ssi_port_table[port].ssi_handle);
-
-    // if (count == 0) {
-    //     count = sl_si91x_ssi_get_tx_data_count(ssi_port_table[port].ssi_handle);
-    // }
-
-    return (int32_t)count;
+    /* The SSI rx/tx data-count registers are not surfaced by this adapter. */
+    TKL_UNUSED(port);
+    return OPRT_NOT_SUPPORTED;
 }
 
 /**

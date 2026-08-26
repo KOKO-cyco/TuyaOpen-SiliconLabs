@@ -32,7 +32,7 @@ int tkl_fs_mkdir(const char *path)
 {
     TKL_UNUSED(path);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -49,7 +49,7 @@ int tkl_fs_remove(const char *path)
 {
     TKL_UNUSED(path);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -68,7 +68,7 @@ int tkl_fs_mode(const char *path, uint32_t *mode)
     TKL_UNUSED(path);
     TKL_UNUSED(mode);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -87,7 +87,7 @@ int tkl_fs_is_exist(const char *path, BOOL_T *is_exist)
     TKL_UNUSED(path);
     TKL_UNUSED(is_exist);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -106,7 +106,7 @@ int tkl_fs_rename(const char *path_old, const char *path_new)
     TKL_UNUSED(path_old);
     TKL_UNUSED(path_new);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -125,7 +125,7 @@ int tkl_dir_open(const char *path, TUYA_DIR *dir)
     TKL_UNUSED(path);
     TKL_UNUSED(dir);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -142,7 +142,7 @@ int tkl_dir_close(TUYA_DIR dir)
 {
     TKL_UNUSED(dir);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -162,7 +162,7 @@ int tkl_dir_read(TUYA_DIR dir, TUYA_FILEINFO *info)
     TKL_UNUSED(dir);
     TKL_UNUSED(info);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -181,7 +181,7 @@ int tkl_dir_name(TUYA_FILEINFO info, const char **name)
     TKL_UNUSED(name);
     TKL_UNUSED(info);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -200,7 +200,7 @@ int tkl_dir_is_directory(TUYA_FILEINFO info, BOOL_T *is_dir)
     TKL_UNUSED(info);
     TKL_UNUSED(is_dir);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -219,7 +219,7 @@ int tkl_dir_is_regular(TUYA_FILEINFO info, BOOL_T *is_regular)
     TKL_UNUSED(info);
     TKL_UNUSED(is_regular);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -255,7 +255,7 @@ int tkl_fclose(TUYA_FILE file)
 {
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -276,7 +276,7 @@ int tkl_fread(void *buf, int bytes, TUYA_FILE file)
     TKL_UNUSED(bytes);
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -297,7 +297,7 @@ int tkl_fwrite(void *buf, int bytes, TUYA_FILE file)
     TKL_UNUSED(bytes);
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -314,7 +314,7 @@ int tkl_fsync(int fd)
 {
     TKL_UNUSED(fd);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -352,7 +352,7 @@ int tkl_feof(TUYA_FILE file)
 {
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -373,7 +373,7 @@ int tkl_fseek(TUYA_FILE file, int64_t offs, int whence)
     TKL_UNUSED(offs);
     TKL_UNUSED(whence);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -390,7 +390,7 @@ int64_t tkl_ftell(TUYA_FILE file)
 {
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -407,7 +407,7 @@ int tkl_fgetsize(const char *filepath)
 {
     TKL_UNUSED(filepath);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -427,7 +427,7 @@ int tkl_faccess(const char *filepath, int mode)
     TKL_UNUSED(filepath);
     TKL_UNUSED(mode);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -444,7 +444,7 @@ int tkl_fgetc(TUYA_FILE file)
 {
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -461,7 +461,7 @@ int tkl_fflush(TUYA_FILE file)
 {
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -478,7 +478,7 @@ int tkl_fileno(TUYA_FILE file)
 {
     TKL_UNUSED(file);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }
 
@@ -498,6 +498,6 @@ int tkl_ftruncate(int fd, uint64_t length)
     TKL_UNUSED(fd);
     TKL_UNUSED(length);
     // --- BEGIN: user implements ---
-    return 0;
+    return OPRT_NOT_SUPPORTED;
     // --- END: user implements ---
 }

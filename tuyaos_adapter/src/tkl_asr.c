@@ -40,7 +40,7 @@
 
 OPERATE_RET tkl_asr_init(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 OPERATE_RET tkl_asr_wakeup_word_config(TKL_ASR_WAKEUP_WORD_E *wakeup_word_arr, uint8_t arr_cnt)
@@ -48,7 +48,7 @@ OPERATE_RET tkl_asr_wakeup_word_config(TKL_ASR_WAKEUP_WORD_E *wakeup_word_arr, u
     TKL_UNUSED(wakeup_word_arr);
     TKL_UNUSED(arr_cnt);
 
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 uint32_t tkl_asr_get_process_uint_size(void)
@@ -61,19 +61,19 @@ OPERATE_RET tkl_asr_feed(uint8_t *data, uint32_t len)
     TKL_UNUSED(data);
     TKL_UNUSED(len);
 
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 OPERATE_RET tkl_asr_reset(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 OPERATE_RET tkl_asr_rdiscard(uint32_t n_frame)
 {
     TKL_UNUSED(n_frame);
 
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 TKL_ASR_WAKEUP_WORD_E tkl_asr_recognize_wakeup_word(void)
@@ -83,5 +83,5 @@ TKL_ASR_WAKEUP_WORD_E tkl_asr_recognize_wakeup_word(void)
 
 OPERATE_RET tkl_asr_deinit(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
