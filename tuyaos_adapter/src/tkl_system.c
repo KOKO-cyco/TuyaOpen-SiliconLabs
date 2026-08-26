@@ -158,7 +158,7 @@ TUYA_RESET_REASON_E tkl_system_get_reset_reason(char **describe)
 {
     TKL_UNUSED(describe);
 
-    return 0;
+    return TUYA_RESET_REASON_UNSUPPORT;
 }
 
 /**

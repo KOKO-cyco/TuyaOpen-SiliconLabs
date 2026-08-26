@@ -123,9 +123,9 @@ void hci_trace_dump(void)
         hci_trace_entry_t *entry = &g_hci_trace[i];
         if (entry->direction == 0) {
             tcount++;
-            sprintf(hdr, "%08ld | %03d | ---> | ", entry->timestamp, tcount);
+            snprintf(hdr, sizeof(hdr), "%08ld | %03d | ---> | ", entry->timestamp, tcount);
         } else {
-            sprintf(hdr, "%08ld |     | <--- | ", entry->timestamp);
+            snprintf(hdr, sizeof(hdr), "%08ld |     | <--- | ", entry->timestamp);
         }
 
         log_printhex_no_newline(hdr, entry->data, entry->length);
@@ -143,6 +143,15 @@ static void hci_trace_free(void)
         }
     }
     g_hci_trace_index = 0;
+}
+#else  /* !BLE_HCI_PSRAM_TRACES */
+/*
+ * tkl_wifi.c calls hci_trace_dump() from its PRINT_DEBUG_LOG recovery path.
+ * That switch and BLE_HCI_PSRAM_TRACES above are independent, so keep the
+ * symbol defined either way rather than making one imply the other.
+ */
+void hci_trace_dump(void)
+{
 }
 #endif /* BLE_HCI_PSRAM_TRACES */
 
@@ -264,18 +273,6 @@ OPERATE_RET tkl_hci_cmd_packet_send(const uint8_t *p_buf, uint16_t buf_len)
         TKL_LOGE("rsi_bt_driver_send_cmd error %lx", status);
     }
 
-    // if (hci_reset) {
-    //     uint8_t cmd_reset[] = {0x01, 0x03, 0x0c, 0x00};
-    //     uint8_t ack_reset[] = {0x04, 0x0E, 0x04, 0x01, 0x03, 0x0C, 0x00};
-
-    //     if (memcmp(cmd_reset, cmd_buf, sizeof(cmd_reset)) == 0) {
-    //         if (tuya_ble_hci_rx_cmd_hs_cb) {
-    //             tuya_ble_hci_rx_cmd_hs_cb(&ack_reset[1], sizeof(ack_reset) - 1);
-    //         }
-    //         hci_reset = 0;
-    //     }
-    // }
-
     tkl_system_free(cmd_buf);
     cmd_buf = NULL;
 
@@ -356,7 +353,6 @@ OPERATE_RET tkl_hci_reset(void)
 #endif
 
     tkl_system_delay(100);
-    // hci_reset = true;
     tkl_system_reset();
 
     return OPRT_OK;

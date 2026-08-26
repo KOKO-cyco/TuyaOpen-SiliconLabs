@@ -314,23 +314,14 @@ OPERATE_RET tkl_i2c_reset(TUYA_I2C_NUM_E port)
 
 OPERATE_RET tkl_i2c_get_status(TUYA_I2C_NUM_E port, TUYA_IIC_STATUS_T *status)
 {
-    // uint32_t i2c_status;
-
-    // const i2c_dev_t *i2c_device = get_i2c_dev(port);
-    // if (i2c_device == NULL || status == NULL)
-    // {
-    //     return OPRT_INVALID_PARM;
-    // }
-
-    // i2c_status = sl_si91x_i2c_get_status(i2c_device->i2c_base);
-
-    // return OPRT_OK;
+    TKL_UNUSED(port);
+    TKL_UNUSED(status);
     return OPRT_NOT_SUPPORTED;
 }
 
 int32_t tkl_i2c_get_data_count(TUYA_I2C_NUM_E port)
 {
-    return 0;
+    return OPRT_NOT_SUPPORTED;
 }
 
 OPERATE_RET tkl_i2c_ioctl(TUYA_I2C_NUM_E port, uint32_t cmd, void *args)

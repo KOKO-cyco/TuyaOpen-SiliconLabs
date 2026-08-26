@@ -134,19 +134,6 @@ OPERATE_RET tkl_ethernetif_output(TKL_NETIF_HANDLE netif, TKL_PBUF_HANDLE p)
         return ERR_ARG;
     }
 
-    // if ((uint32_t)p_netif == (uint32_t)&g_wifi_sta_context.netif)
-    // {
-    //     interface = SL_WIFI_CLIENT_INTERFACE;
-    // }
-    // else if ((uint32_t)p_netif == (uint32_t)&g_wifi_ap_context.netif)
-    // {
-    //     interface = SL_WIFI_AP_INTERFACE;
-    // }
-    // else
-    // {
-    //     return ERR_ARG;
-    // }
-
     tkl_wifi_get_work_mode(&mode);
     if (mode == WWM_SOFTAP) {
         interface = SL_WIFI_AP_INTERFACE;

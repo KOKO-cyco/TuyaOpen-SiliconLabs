@@ -30,7 +30,7 @@ OPERATE_RET tkl_kws_init(void)
 OPERATE_RET tkl_kws_reg_wakeup_cb(TKL_KWS_WAKEUP_CB wakeup_cb)
 {
     TKL_UNUSED(wakeup_cb);
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 /**
@@ -39,7 +39,7 @@ OPERATE_RET tkl_kws_reg_wakeup_cb(TKL_KWS_WAKEUP_CB wakeup_cb)
  */
 OPERATE_RET tkl_kws_enable(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 /**
@@ -48,7 +48,7 @@ OPERATE_RET tkl_kws_enable(void)
  */
 OPERATE_RET tkl_kws_disable(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 /**
@@ -57,5 +57,5 @@ OPERATE_RET tkl_kws_disable(void)
  */
 OPERATE_RET tkl_kws_deinit(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }

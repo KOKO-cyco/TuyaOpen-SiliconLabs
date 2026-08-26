@@ -12,6 +12,7 @@
 #include <assert.h>
 
 #include "tuya_error_code.h"
+#include "tkl_log.h"
 #include "tkl_network.h"
 #include "tkl_output.h"
 #include "tkl_system.h"
@@ -227,27 +228,10 @@ int tkl_net_get_nonblock(const int fd)
  */
 OPERATE_RET tkl_net_set_block(const int fd, const bool_t block)
 {
+    /* No fcntl() on this stack; sockets keep the mode they were created with. */
     TKL_UNUSED(fd);
     TKL_UNUSED(block);
-    return 0;
-#if 0
-    if (fd < 0) {
-        return -3000 + fd;
-    }
-
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (block) {
-        flags &= (~O_NONBLOCK);
-    } else {
-        flags |= O_NONBLOCK;
-    }
-
-    if (fcntl(fd, F_SETFL, flags) < 0) {
-        return OPRT_COM_ERROR;
-    }
-
     return OPRT_OK;
-#endif
 }
 
 /**
@@ -310,7 +294,7 @@ int tkl_net_socket_create(const TUYA_PROTOCOL_TYPE_E type)
         fd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
         break;
     default:
-        printf("err unsupport tkl_net_socket_create type(%d), fd(%d)!\r\n", type, fd);
+        TKL_LOGE("unsupported tkl_net_socket_create type(%d), fd(%d)", type, fd);
         break;
     }
 
@@ -491,7 +475,6 @@ TUYA_ERRNO tkl_net_send_to(const int fd, const void *buf, const uint32_t nbytes,
     sock_addr.sin_family      = AF_INET;
     sock_addr.sin_port        = htons(tmp_port);
     sock_addr.sin_addr.s_addr = htonl(tmp_addr);
-    // return -1;
     return sendto(fd, buf, nbytes, 0, (struct sockaddr *)&sock_addr, sizeof(sock_addr));
 }
 
@@ -675,7 +658,7 @@ OPERATE_RET tkl_net_set_cloexec(const int fd)
 {
     TKL_UNUSED(fd);
 
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 /**

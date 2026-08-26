@@ -50,7 +50,7 @@ OPERATE_RET tkl_vad_feed(uint8_t *data, uint32_t len)
     TKL_UNUSED(data);
     TKL_UNUSED(len);
 
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 TKL_VAD_STATUS_T tkl_vad_get_status(void)
@@ -60,15 +60,15 @@ TKL_VAD_STATUS_T tkl_vad_get_status(void)
 
 OPERATE_RET tkl_vad_start(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 OPERATE_RET tkl_vad_stop(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
 
 OPERATE_RET tkl_vad_deinit(void)
 {
-    return OPRT_OK;
+    return OPRT_NOT_SUPPORTED;
 }
