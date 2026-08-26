@@ -217,7 +217,7 @@ generate()
     local build_dir=${OT_CMAKE_BUILD_DIR-"${repo_dir}/build/${board}"}
     local tuyaopen_slc_data=${tuyaopen_slc_data-"${build_dir}/slc/tuyaopen_slc.data"}
 
-    if [ "${board}" = "siwx917_ai_dev_kit" ]; then
+    if [ -n "$(find "${repo_dir}/slc" -name "${board}.slcc" -print -quit 2>/dev/null)" ]; then
         sdk_path="tuyaopen-si91x"
     else
         sdk_path="wiseconnect3_sdk"

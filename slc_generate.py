@@ -343,10 +343,11 @@ set(SLC_INCLUDE_DIRS
 
 def generate(project_name, build_param_path):
     build_config_file = os.path.join(build_param_path, "cache/using.config")
-    board = get_config_param(build_config_file, "CONFIG_BOARD_NAME")
+    board = get_config_param(build_config_file, "CONFIG_BOARD_CHOICE")
     if board is None:
         print(f"Error: Board not found")
         return False
+    board = board.lower()
     print(f'board: {board}')
     root = os.path.dirname(os.path.abspath(__file__))
     slcp_file = os.path.join(
