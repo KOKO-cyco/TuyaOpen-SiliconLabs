@@ -1,0 +1,12 @@
+# This platform's own sources are LF, whatever the checkout host prefers.
+# Files under mcu/boards/, mcu/defaults/ and slc/ are emitted by Simplicity
+# Studio / slc and keep whatever line endings those tools produced.
+*.py            text eol=lf
+*.cmake         text eol=lf
+CMakeLists.txt  text eol=lf
+/script/*       text eol=lf
+tuyaos_adapter/src/*.c  text eol=lf
+
+# Byte-exact: a patch will not apply if its endings are rewritten.
+*.patch  -text
+*.rps    binary
