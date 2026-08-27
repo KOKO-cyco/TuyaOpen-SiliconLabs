@@ -160,12 +160,7 @@ patch_linkerfile()
 overwrite_linkerfile()
 {
     local tuyaopen_linker_file="${script_dir}/../mcu/defaults/linkerfile_psram_SoC.ld"
-    local switch_demo_linker_file="${script_dir}/../mcu/defaults/linkerfile_switch_demo.ld"
     local linker_file=""
-
-    if [[ $2 == *switch_demo* ]]; then
-        tuyaopen_linker_file="${switch_demo_linker_file}"
-    fi
 
     if [ -f "$1/autogen/linkerfile_psram_SoC.ld" ]; then
         linker_file="$1/autogen/linkerfile_psram_SoC.ld"
@@ -222,7 +217,7 @@ generate()
     local build_dir=${OT_CMAKE_BUILD_DIR-"${repo_dir}/build/${board}"}
     local tuyaopen_slc_data=${tuyaopen_slc_data-"${build_dir}/slc/tuyaopen_slc.data"}
 
-    if [ "${board}" = "siwx917_ai_dev_kit" ]; then
+    if [ -n "$(find "${repo_dir}/slc" -name "${board}.slcc" -print -quit 2>/dev/null)" ]; then
         sdk_path="tuyaopen-si91x"
     else
         sdk_path="wiseconnect3_sdk"
