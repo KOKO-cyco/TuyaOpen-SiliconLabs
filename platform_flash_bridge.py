@@ -567,16 +567,6 @@ def _choose_channel(commander, port, logger):
     -p -- could never reach SWD, and got a guaranteed failure instead. So a
     VCOM is warned about and dropped, and the menu decides.
     """
-    if port and not _is_jlink_vcom(port):
-        logger.info(f"Port given ({port}) -- using serial/ISP on it.")
-        return True, port
-
-    if port:
-        logger.warning(f"{port} is the J-Link's VCOM, which is the console "
-                       "UART on this board, not the ISP UART -- nothing can "
-                       "be flashed over it. Ignoring it; the probe behind it "
-                       "can flash over SWD, so pick a channel below.")
-
     forced = os.environ.get(CHANNEL_ENV, "").strip().lower()
     if forced:
         if forced not in CHANNELS:
@@ -586,12 +576,32 @@ def _choose_channel(commander, port, logger):
         logger.info(f"{CHANNEL_ENV}={forced} -- honouring it as given.")
         if forced == "swd":
             return False, ""
+        # The env names the channel, -p names the port within it. This pairing
+        # is what the "Pass -p <port>" hint below asks for, and it was
+        # unreachable while -p short-circuited above this block.
+        if port:
+            if _is_jlink_vcom(port):
+                logger.warning(f"{port} is the J-Link's VCOM, not the ISP "
+                               "UART; this will not work. Honouring it only "
+                               f"because {CHANNEL_ENV}=serial and -p both "
+                               "say so.")
+            return True, port
         ports = _usb_serial_ports()
         if len(ports) != 1:
             logger.error("SIWX917_CHANNEL=serial needs exactly one USB serial "
                          f"adapter, found {len(ports)}. Pass -p <port>.")
             return None, ""
         return True, ports[0]["device"]
+
+    if port and not _is_jlink_vcom(port):
+        logger.info(f"Port given ({port}) -- using serial/ISP on it.")
+        return True, port
+
+    if port:
+        logger.warning(f"{port} is the J-Link's VCOM, which is the console "
+                       "UART on this board, not the ISP UART -- nothing can "
+                       "be flashed over it. Ignoring it; the probe behind it "
+                       "can flash over SWD, so pick a channel below.")
 
     entries = []
     for a in _jlink_adapters(commander, logger):
