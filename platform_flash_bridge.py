@@ -557,14 +557,25 @@ def _choose_channel(commander, port, logger):
     The menu is shown even when only one channel was detected: seeing what is
     attached before anything is written is worth one keypress, and it keeps
     this from special-casing the single-candidate path.
+
+    A given -p is honoured as "serial/ISP on this one" -- unless it is the
+    J-Link's own VCOM, which _usb_serial_ports() already refuses to put in the
+    menu for the reason its docstring gives: on both boards this platform
+    supports that port is the console UART, so nothing can be written over it.
+    Short-circuiting onto a channel the menu will not even offer meant a
+    caller that hands us a port list -- the IDE picks one and always passes
+    -p -- could never reach SWD, and got a guaranteed failure instead. So a
+    VCOM is warned about and dropped, and the menu decides.
     """
-    if port:
+    if port and not _is_jlink_vcom(port):
         logger.info(f"Port given ({port}) -- using serial/ISP on it.")
-        if _is_jlink_vcom(port):
-            logger.warning(f"{port} looks like a J-Link VCOM, which is the "
-                           "console UART on this board, not the ISP UART. "
-                           "Flashing over it will not work.")
         return True, port
+
+    if port:
+        logger.warning(f"{port} is the J-Link's VCOM, which is the console "
+                       "UART on this board, not the ISP UART -- nothing can "
+                       "be flashed over it. Ignoring it; the probe behind it "
+                       "can flash over SWD, so pick a channel below.")
 
     forced = os.environ.get(CHANNEL_ENV, "").strip().lower()
     if forced:
