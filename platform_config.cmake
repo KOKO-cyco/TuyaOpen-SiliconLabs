@@ -1,5 +1,5 @@
 list_subdirectories(PLATFORM_PUBINC_1 ${PLATFORM_PATH}/tuyaos_adapter)
-include(${TOP_SOURCE_DIR}/boards/SiWx917/common/CMakeLists.txt)
+include(${TOP_SOURCE_DIR}/boards/${PLATFORM_NAME}/common/CMakeLists.txt)
 
 set(PLATFORM_PUBINC_2
     ${BOARD_INC})
@@ -48,10 +48,10 @@ add_definitions(-DSLI_SI917B0)
 # add_subdirectory(src/...), which does reach it (same place SLI_SI917B0
 # above is defined). Also must use PLATFORM_PATH, not CMAKE_SOURCE_DIR: this
 # file runs in the TOP-LEVEL (TuyaOpen-root) CMake project, where
-# CMAKE_SOURCE_DIR is the repo root, not platform/SiWx917 -- unlike
+# CMAKE_SOURCE_DIR is the repo root, not platform/SIWX917 -- unlike
 # ./CMakeLists.txt, which is its own separate platform-rooted CMake project
 # (built into apps/*/.build/your_chat_bot/) where CMAKE_SOURCE_DIR does mean
-# platform/SiWx917. Confirmed via nm the hard way: CMAKE_SOURCE_DIR here
+# platform/SIWX917. Confirmed via nm the hard way: CMAKE_SOURCE_DIR here
 # resolved to a nonexistent path, which -I silently skips with no build error,
 # and decoder_mp3.c.obj fell through to tal_psram_malloc unnoticed.
 #
@@ -60,7 +60,7 @@ add_definitions(-DSLI_SI917B0)
 # built for this board, while src/audio_player/CMakeLists.txt only creates the
 # audio_player target when the AI player is enabled. An app without it --
 # switch_demo, which has no config/ of its own and so gets built against
-# boards/SiWx917/config/SiWx917.config by `tos.py dev bac` -- has no such
+# boards/SIWX917/config/SIWX917.config by `tos.py dev bac` -- has no such
 # target, and TARGET_DIRECTORY on a target that does not exist is a hard CMake
 # error rather than a no-op. Without the AI player there is no decoder_mp3.c in
 # the build to redirect anyway.

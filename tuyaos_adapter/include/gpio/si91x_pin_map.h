@@ -44,7 +44,7 @@
  * and so inherited the chip-wide default that declares every pad.
  *
  * Which pads a board brings out belongs to the board layer, and is already
- * there: boards/SiWx917/<BOARD>/Kconfig names the pins that board uses. This
+ * there: boards/SIWX917/<BOARD>/Kconfig names the pins that board uses. This
  * is how T5AI does it too -- one flat, unconditional pinmap in the chip layer
  * and no board conditionals in it at all.
  *

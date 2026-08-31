@@ -5,7 +5,7 @@ Silicon Labs SiWx917 platform repository for [TuyaOpen](https://github.com/tuya/
 This is a sub-repository of TuyaOpen and cannot be compiled standalone. It is cloned into:
 
 ```text
-<TuyaOpen>/platform/SiWx917
+<TuyaOpen>/platform/SIWX917
 ```
 
 ## Quick Start

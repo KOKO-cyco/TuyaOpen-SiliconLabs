@@ -117,7 +117,7 @@ if(CONFIG_ENABLE_WIFI)
 
     # tkl_wifi.c calls dhcps_start/stop/set_new_lease_cb for SoftAP; pull in
     # lwIP's dhcpserver applet from src/liblwip only when that's needed.
-    # Declared in boards/SiWx917/TKL_Kconfig, not src/liblwip, since no other
+    # Declared in boards/SIWX917/TKL_Kconfig, not src/liblwip, since no other
     # platform references these symbols.
     if(CONFIG_ENABLE_LWIP_DHCPD STREQUAL "y")
         set(DHCPD_SRC "${OPEN_ROOT}/src/liblwip/lwip-2.1.2/src/apps/dhcpserver/dhcpserver.c")
@@ -171,8 +171,8 @@ include_directories(
     ${ADAPTER_INCLUDE_DIRS}
 )
 
-if(EXISTS ${OPEN_ROOT}/boards/SiWx917/common/CMakeLists.txt)
-    include(${OPEN_ROOT}/boards/SiWx917/common/CMakeLists.txt)
+if(EXISTS ${OPEN_ROOT}/boards/${CONFIG_PLATFORM_CHOICE}/common/CMakeLists.txt)
+    include(${OPEN_ROOT}/boards/${CONFIG_PLATFORM_CHOICE}/common/CMakeLists.txt)
     list(APPEND OS_ADAPTER_SOURCES ${BOARD_SRC})
     include_directories(${BOARD_INC})
 endif()

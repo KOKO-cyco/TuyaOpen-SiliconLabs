@@ -7,11 +7,11 @@ which host.
 The SiWx917 platform is **not** a standalone project. It must live inside the TuyaOpen tree at:
 
 ```text
-~/TuyaOpen/platform/SiWx917
+~/TuyaOpen/platform/SIWX917
 ```
 
 > **Note:** SiWx917 is a first-class platform in current TuyaOpen. Board support lives in
-> `boards/SiWx917/` in the main repository, so no integration patch has to be applied.
+> `boards/SIWX917/` in the main repository, so no integration patch has to be applied.
 
 ## Table of Contents
 
@@ -37,7 +37,7 @@ Needed on every host:
 - **Python 3.12** -- installed and managed by `export.sh` / `uv`, not by you
 - CMake, Ninja and the Python packages -- installed by `export.sh`
 - Silicon Labs SLC and Simplicity Commander -- fetched by `platform_prepare.py`
-  into `platform/SiWx917/tools/`, nothing goes into the system
+  into `platform/SIWX917/tools/`, nothing goes into the system
 
 Verify basics:
 
@@ -65,7 +65,7 @@ What has actually been run, rather than what ought to work:
 - **Ignore `/usr/bin/java`.** On macOS it is a stub that answers `command -v`
   and then fails with "Unable to locate a Java Runtime". The bootstrap tests
   whether java *runs*, and fetches a Temurin JRE into
-  `platform/SiWx917/tools/jre` for slc when it does not. Installing Homebrew's
+  `platform/SIWX917/tools/jre` for slc when it does not. Installing Homebrew's
   `openjdk` does not help either: that formula is keg-only and never becomes
   `java`.
 - **The first `source export.sh` is slow and silent.** There is no prebuilt
@@ -86,10 +86,10 @@ What has actually been run, rather than what ought to work:
 ├── apps/
 │   ├── tuya.ai/your_chat_bot/config/SIWX917_AI_DEV_KIT.config
 │   └── tuya_cloud/switch_demo/config/SIWX917_AI_DEV_KIT.config
-├── boards/SiWx917/                  # first-class board support in main repo
+├── boards/SIWX917/                  # first-class board support in main repo
 ├── platform/
-│   ├── platform_config.yaml         # includes SiWx917 entry
-│   └── SiWx917/                     # this platform repository
+│   ├── platform_config.yaml         # includes SIWX917 entry
+│   └── SIWX917/                     # this platform repository
 │       ├── tuyaos_adapter/
 │       ├── mcu/
 │       │   └── patch/RS9117_WC_SI.rps   # TA firmware (flash once per device)
@@ -102,8 +102,8 @@ What has actually been run, rather than what ought to work:
 
 Setup flow:
 
-1. Clone a TuyaOpen tree that already contains `boards/SiWx917/` and a `SiWx917` entry in `platform/platform_config.yaml`
-2. Ensure `platform/SiWx917` points at this repository (`dev` branch recommended while porting)
+1. Clone a TuyaOpen tree that already contains `boards/SIWX917/` and a `SIWX917` entry in `platform/platform_config.yaml`
+2. Ensure `platform/SIWX917` points at this repository (`dev` branch recommended while porting)
 3. Configure and build `switch_demo` first, then `your_chat_bot`
 
 ## Step-by-Step Setup
@@ -127,21 +127,21 @@ For local development you can also place this repo directly:
 ```bash
 cd ~/TuyaOpen
 mkdir -p platform
-git clone https://github.com/tuya/TuyaOpen-SiliconLabs.git platform/SiWx917
-cd platform/SiWx917
+git clone https://github.com/tuya/TuyaOpen-SiliconLabs.git platform/SIWX917
+cd platform/SIWX917
 git checkout dev
 ```
 
 Or symlink a working copy:
 
 ```bash
-ln -sfn /path/to/TuyaOpen-SiliconLabs ~/TuyaOpen/platform/SiWx917
+ln -sfn /path/to/TuyaOpen-SiliconLabs ~/TuyaOpen/platform/SIWX917
 ```
 
 Confirm `platform/platform_config.yaml` contains:
 
 ```yaml
-- name: SiWx917
+- name: SIWX917
   repo: https://github.com/tuya/TuyaOpen-SiliconLabs
   branch: dev
   commit: <pinned-commit-sha>
@@ -198,7 +198,7 @@ everyone else.
 tos.py config menu
 ```
 
-Useful options under **SiWx917**:
+Useful options under **SIWX917**:
 
 | Menu | Options |
 |------|---------|
@@ -214,7 +214,7 @@ commander manufacturing write tambr  --data mbr_config.json -d SiWG917M111MGTBA
 commander manufacturing write m4mbrcf --data mbr_config.json -d SiWG917M111MGTBA
 ```
 
-Commander is bundled at `platform/SiWx917/tools/commander/commander`.
+Commander is bundled at `platform/SIWX917/tools/commander/commander`.
 
 ### Step 5: Build
 
@@ -228,11 +228,11 @@ Firmware artifacts are under the app `dist/` / `.build/` directories.
 
 | Item | Value |
 |------|-------|
-| Platform name | `SiWx917` |
+| Platform name | `SIWX917` |
 | Board (AI kit) | `SIWX917_AI_DEV_KIT` |
-| Platform repo | `platform/SiWx917` |
+| Platform repo | `platform/SIWX917` |
 | Chat bot config | `apps/tuya.ai/your_chat_bot/config/SIWX917_AI_DEV_KIT.config` |
-| Switch demo config | none of its own; `switch_demo` has no `config/` directory, so `config choice` there offers the board defaults from `boards/SiWx917/config/` |
+| Switch demo config | none of its own; `switch_demo` has no `config/` directory, so `config choice` there offers the board defaults from `boards/SIWX917/config/` |
 
 ## Next Steps
 
@@ -248,7 +248,7 @@ recovery.
 reports having none. To look yourself:
 
 ```bash
-cd platform/SiWx917
+cd platform/SIWX917
 tools/commander/commander mfg917 info -d SiWG917M111MGTBA --json
 ```
 

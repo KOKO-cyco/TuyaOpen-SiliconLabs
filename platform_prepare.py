@@ -230,7 +230,7 @@ def download_tools(root, prepare_file):
 
     if not _slc_installed(root):
         print("ERROR: SLC CLI still missing after bootstrap.")
-        print("Install manually: cd platform/SiWx917 && ./script/bootstrap silabs")
+        print("Install manually: cd platform/SIWX917 && ./script/bootstrap silabs")
         return False
 
     return True
@@ -330,7 +330,7 @@ def platform_prepare(root, target):
 
 def main():
     print("================== platform_prepare ==================")
-    target = "SiWx917"
+    target = "SIWX917"
     print(f"target: {target} ")
     root = os.path.dirname(os.path.abspath(__file__))
     if not platform_prepare(root, target):
