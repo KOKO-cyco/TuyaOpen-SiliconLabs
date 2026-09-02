@@ -59,6 +59,7 @@ import os
 import platform
 import subprocess
 import sys
+import time
 
 # -----------------------------------------------------------------------------
 #                                  Constants
@@ -110,6 +111,12 @@ TA_FIRMWARE_RELPATH = os.path.join("mcu", "patch", "RS9117_WC_SI.rps")
 # supports -- so it is kept out of the channel menu (an explicit -p still
 # honours it, with a warning).
 JLINK_USB_VID = 0x1366
+
+# The NWP resets itself to finalise an install and takes the RAM-resident
+# flash-loader down with it, so Commander's confirmation can go missing on a
+# write that worked. Read the version back before believing the failure.
+TA_VERIFY_ATTEMPTS = 3
+TA_VERIFY_DELAY = 3
 
 SWD_PROBE_TIMEOUT = 20
 MFG_INFO_TIMEOUT = 30
@@ -169,22 +176,14 @@ SWD_HINTS = """  SWD troubleshooting:
       ISP's purpose as reprogramming "if the application code uses JTAG pins
       for functional use", i.e. ISP is the way in when JTAG is unavailable."""
 
-# Printed after a TA write. A completed transfer is not a working radio, and
-# saying so is the whole point -- "Platform flash success" would imply more.
-#
-# This used to be followed by twenty-odd lines on 16056/16059 and the ROM
-# bootloader menu. That is a boot symptom, not a write outcome, and printing
-# the recovery procedure for a symptom nobody had seen yet only buried the one
-# step that mattered. GETTING_STARTED.md carries it; this points there.
-TA_AFTER_WRITE = """  The transfer finished, which is not the same as a radio that starts.
-  Power-cycle the board -- the install is finalised at reset, and a probe's
-  reset does not always do it -- then check the application log for:
-      WiFi initialization success
-      Running TA fw: <version>
-  If instead it reports WiFi initialization error 16056 or 16059, or
-  m4_ta_secure_handshake: 0x7, see GETTING_STARTED.md, "Recovering a device
-  whose radio will not start". Rewriting the image is the last thing to try
-  there, not the first."""
+# Printed after a TA write. The install is finalised at reset and a probe's
+# reset does not always do it, so the one step worth saying is the power-cycle.
+# Recovery for a radio that then refuses to start is a boot symptom, not a
+# write outcome; GETTING_STARTED.md carries it.
+TA_AFTER_WRITE = ("NWP firmware written. Power-cycle the board (pull the power, "
+                  "not the reset button) to finalise the install. If the radio "
+                  "then fails to start, see GETTING_STARTED.md, \"Recovering a "
+                  "device whose radio will not start\".")
 
 # Printed when writing the NWP image fails over a link that has already proven
 # itself. Ordered by cost, and each claim is measured: 2026-08-21, two writes
@@ -794,6 +793,31 @@ def _load(commander, image, device, serial, port, fixedspeed, logger,
 
     if _run(argv, logger):
         return True
+
+    # "Flashloader is not ready" after the data went out is the NWP resetting
+    # to finalise, not a failed write. The device itself is the only witness
+    # left, so ask it before reporting a failure.
+    if info and not info["is_m4"]:
+        for attempt in range(TA_VERIFY_ATTEMPTS):
+            time.sleep(TA_VERIFY_DELAY)
+            answered, device_ver = _device_nwp_version(
+                commander, device, serial, port, logger)
+            if not answered:
+                continue
+            if device_ver == info["version"]:
+                logger.info(
+                    f"Commander got no confirmation, but the device now runs "
+                    f"{device_ver} -- the write landed. Treating as success.")
+                return True
+            logger.error(
+                f"Device reports {device_ver or 'no NWP firmware'}, expected "
+                f"{info['version']}.")
+            break
+        else:
+            logger.error("The device did not answer after the write; it may "
+                         "still be resetting. Power-cycle and re-read with: "
+                         f"commander mfg917 info -d {device} --json")
+
     # Wiring and power hints help only when the channel never came up. Once it
     # has -- mfg917 info answered over this same link, the flash-loader
     # uploaded, the data went out -- "is the board powered? is SWCLK on
@@ -872,7 +896,7 @@ def platform_flash(using_data=None,
         ok = _load(commander, ta_image, device, serial, chosen, fixedspeed,
                    logger, answered)
         if ok:
-            logger.warning(TA_AFTER_WRITE)
+            logger.info(TA_AFTER_WRITE)
         elif answered:
             logger.error(TA_WRITE_FAILED.format(device=device))
         return {"success": ok, "message": "" if ok else "TA flash failed"}
@@ -898,5 +922,5 @@ def platform_flash(using_data=None,
                 logger.error("The NWP firmware was written but the application "
                              "was not. Re-run and pick M4 ONLY.")
             return {"success": False, "message": f"{what} flash failed"}
-    logger.warning(TA_AFTER_WRITE)
+    logger.info(TA_AFTER_WRITE)
     return {"success": True, "message": ""}
