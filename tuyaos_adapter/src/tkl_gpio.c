@@ -41,6 +41,7 @@
  * fail to compile on a board that leaves one out. */
 #include "em_device.h"
 #include "sl_si91x_driver_gpio.h"
+#include "rsi_rom_egpio.h"
 
 // -----------------------------------------------------------------------------
 //                              Macros and Typedefs
@@ -196,6 +197,10 @@ OPERATE_RET tkl_gpio_init(TUYA_GPIO_NUM_E pin_id, const TUYA_GPIO_BASE_CFG_T *cf
     /* Set up GPIO pin configuration */
     SL_GPIO_SET(pin_config.port_pin, pin_info);
     pin_config.direction = direction;
+
+    if (pin_info->pin >= HOST_PAD_MIN && pin_info->pin <= HOST_PAD_MAX) {
+        RSI_EGPIO_HostPadsGpioModeEnable(pin_info->pin);
+    }
 
     status = sl_gpio_set_configuration(pin_config);
     if (status != SL_STATUS_OK) {
