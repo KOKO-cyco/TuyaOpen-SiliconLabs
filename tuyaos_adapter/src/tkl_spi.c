@@ -37,6 +37,9 @@
 #include "sl_status.h"
 #include "sl_si91x_ssi.h"
 #include "sl_si91x_gspi.h"
+#include "rsi_rom_egpio.h"
+#include "sl_si91x_gpio_common.h"
+#include "RTE_Device_917.h"
 #include "tkl_spi.h"
 #include "tkl_log.h"
 #include "FreeRTOSConfig.h"
@@ -44,6 +47,12 @@
 // -----------------------------------------------------------------------------
 //                              Macros and Typedefs
 // -----------------------------------------------------------------------------
+
+#if defined(SL_GSPI_DMA_CONFIG_ENABLE) && (SL_GSPI_DMA_CONFIG_ENABLE == 1)
+#define TKL_GSPI_DMA_ON 1
+#else
+#define TKL_GSPI_DMA_ON 0
+#endif
 
 #define MAX_PORT_SUPPORTED              4
 #define SSI_MASTER_RECEIVE_SAMPLE_DELAY 0
@@ -240,8 +249,7 @@ OPERATE_RET tkl_spi_init(TUYA_SPI_NUM_E port, const TUYA_SPI_BASE_CFG_T *cfg)
 
         gspi_config.bit_width = (cfg->databits == TUYA_SPI_DATA_BIT16) ? 16 : 8;
         gspi_config.bitrate   = cfg->freq_hz;
-        // gspi_config.slave_select_mode = SL_GSPI_MASTER_HW_OUTPUT;
-        gspi_config.slave_select_mode = SL_GSPI_MASTER_SW;
+        gspi_config.slave_select_mode = SL_GSPI_MASTER_HW_OUTPUT;
         gspi_config.swap_read         = false;
         gspi_config.swap_write        = false;
 
@@ -249,6 +257,30 @@ OPERATE_RET tkl_spi_init(TUYA_SPI_NUM_E port, const TUYA_SPI_BASE_CFG_T *cfg)
         if (status != SL_STATUS_OK) {
             TKL_LOGE("sl_si91x_gspi_init error %lx", status);
             return OPRT_RESOURCE_NOT_READY;
+        }
+
+        {
+            static const struct {
+                uint8_t pin;
+                uint8_t mux;
+                uint8_t pad;
+            } gspi_pins[] = {
+                {RTE_GSPI_MASTER_CLK_PIN, RTE_GSPI_MASTER_CLK_MUX, RTE_GSPI_MASTER_CLK_PAD},
+                {RTE_GSPI_MASTER_MOSI_PIN, RTE_GSPI_MASTER_MOSI_MUX, RTE_GSPI_MASTER_MOSI_PAD},
+                {RTE_GSPI_MASTER_CS0_PIN, RTE_GSPI_MASTER_CS0_MUX, RTE_GSPI_MASTER_CS0_PAD},
+            };
+            for (unsigned i = 0; i < sizeof(gspi_pins) / sizeof(gspi_pins[0]); i++) {
+                uint8_t pin = gspi_pins[i].pin;
+                if (gspi_pins[i].pad != 0) {
+                    RSI_EGPIO_PadSelectionEnable(gspi_pins[i].pad);
+                }
+                if (pin >= HOST_PAD_MIN && pin <= HOST_PAD_MAX) {
+                    RSI_EGPIO_HostPadsGpioModeEnable(pin);
+                }
+                RSI_EGPIO_PadReceiverEnable(pin);
+                RSI_EGPIO_SetPinMux(EGPIO, RTE_GSPI_MASTER_CLK_PORT, pin, gspi_pins[i].mux);
+            }
+            RSI_EGPIO_SetPinMux(EGPIO, RTE_GSPI_MASTER_MISO_PORT, RTE_GSPI_MASTER_MISO_PIN, EGPIO_PIN_MUX_MODE0);
         }
 
         gspi_status = sl_si91x_gspi_get_status(dev->gspi_handle);
@@ -267,8 +299,9 @@ OPERATE_RET tkl_spi_init(TUYA_SPI_NUM_E port, const TUYA_SPI_BASE_CFG_T *cfg)
             TKL_LOGE("sl_si91x_gspi_register_event_callback error %lx", status);
         }
 
-        TKL_LOGD("GSPI clk div %lu, frame length %lu", sl_si91x_gspi_get_clock_division_factor(dev->gspi_handle),
-                 sl_si91x_gspi_get_frame_length());
+        TKL_LOGI("GSPI clk div %lu, frame length %lu, DMA %s",
+                 sl_si91x_gspi_get_clock_division_factor(dev->gspi_handle), sl_si91x_gspi_get_frame_length(),
+                 TKL_GSPI_DMA_ON ? "on" : "OFF (one IRQ per word)");
 
         sl_si91x_gspi_set_slave_number(GSPI_SLAVE_0);
     } else {
