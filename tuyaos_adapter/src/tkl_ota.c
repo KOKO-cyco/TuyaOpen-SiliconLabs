@@ -12,7 +12,34 @@
 
 // --- BEGIN: user defines and implements ---
 #include "tkl_ota.h"
+#include "tkl_system.h"
+#include "tkl_log.h"
 #include "tuya_error_code.h"
+
+#include "firmware_upgradation.h"
+#include "sl_additional_status.h"
+
+#include <string.h>
+
+#define RPS_HEADER_SIZE 64
+#define FWUP_CHUNK_SIZE 1024
+
+#define M4_FLASH_START 0x8202000
+
+extern char linker_littlefs_begin;
+
+static struct {
+    BOOL_T   active;
+    BOOL_T   header_sent;
+    BOOL_T   done;
+    uint32_t image_size;
+    uint32_t sent;
+} s_ota;
+
+static void __ota_reset(void)
+{
+    memset(&s_ota, 0, sizeof(s_ota));
+}
 // --- END: user defines and implements ---
 
 /**
@@ -27,10 +54,17 @@
  */
 OPERATE_RET tkl_ota_get_ability(uint32_t *image_size, TUYA_OTA_TYPE_E *type)
 {
-    TKL_UNUSED(image_size);
-    TKL_UNUSED(type);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    if (image_size == NULL || type == NULL) {
+        return OPRT_INVALID_PARM;
+    }
+
+    /* Bootloader stages the new image in the same M4 partition the running one
+     * occupies, so only half of it can be offered. */
+    *image_size = ((uint32_t)&linker_littlefs_begin - M4_FLASH_START) / 2;
+    *type       = TUYA_OTA_FULL;
+
+    return OPRT_OK;
     // --- END: user implements ---
 }
 
@@ -47,11 +81,34 @@ OPERATE_RET tkl_ota_get_ability(uint32_t *image_size, TUYA_OTA_TYPE_E *type)
  */
 OPERATE_RET tkl_ota_start_notify(uint32_t image_size, TUYA_OTA_TYPE_E type, TUYA_OTA_PATH_E path)
 {
-    TKL_UNUSED(image_size);
-    TKL_UNUSED(type);
-    TKL_UNUSED(path);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    uint32_t        max_size = 0;
+    TUYA_OTA_TYPE_E max_type = TUYA_OTA_FULL;
+
+    if (type != TUYA_OTA_FULL || path != TUYA_OTA_PATH_AIR) {
+        TKL_LOGE("ota type %d path %d unsupported", type, path);
+        return OPRT_NOT_SUPPORTED;
+    }
+
+    tkl_ota_get_ability(&max_size, &max_type);
+    if (image_size == 0 || image_size > max_size) {
+        TKL_LOGE("ota image %lu over limit %lu", image_size, max_size);
+        return OPRT_EXCEED_UPPER_LIMIT;
+    }
+
+    /* A failed hmac check ends the download without reaching end_notify, which
+     * would leave the NWP holding a half-fed image. */
+    if (s_ota.active) {
+        sl_si91x_fwup_abort();
+    }
+
+    __ota_reset();
+    s_ota.image_size = image_size;
+    s_ota.active     = TRUE;
+
+    TKL_LOGI("ota start, image %lu", image_size);
+
+    return OPRT_OK;
     // --- END: user implements ---
 }
 
@@ -67,10 +124,77 @@ OPERATE_RET tkl_ota_start_notify(uint32_t image_size, TUYA_OTA_TYPE_E type, TUYA
  */
 OPERATE_RET tkl_ota_data_process(TUYA_OTA_DATA_T *pack, uint32_t *remain_len)
 {
-    TKL_UNUSED(pack);
-    TKL_UNUSED(remain_len);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    const uint8_t *p    = NULL;
+    uint32_t       left = 0;
+    sl_status_t    st   = SL_STATUS_OK;
+
+    if (pack == NULL || pack->data == NULL || remain_len == NULL) {
+        return OPRT_INVALID_PARM;
+    }
+    if (!s_ota.active) {
+        return OPRT_COM_ERROR;
+    }
+
+    p           = pack->data;
+    left        = pack->len;
+    *remain_len = 0;
+
+    if (s_ota.done) {
+        return OPRT_OK;
+    }
+
+    if (!s_ota.header_sent) {
+        /* Whatever is left unconsumed here comes back at the head of the next
+         * pack, so short reads just wait for the rest of the header. */
+        if (left < RPS_HEADER_SIZE) {
+            *remain_len = left;
+            return OPRT_OK;
+        }
+
+        st = sl_si91x_fwup_start(p);
+        if (st != SL_STATUS_OK) {
+            TKL_LOGE("fwup start failed 0x%lx", st);
+            s_ota.active = FALSE;
+            return OPRT_COM_ERROR;
+        }
+
+        s_ota.header_sent = TRUE;
+        s_ota.sent        = RPS_HEADER_SIZE;
+        p += RPS_HEADER_SIZE;
+        left -= RPS_HEADER_SIZE;
+    }
+
+    while (left > 0) {
+        uint32_t n = (left >= FWUP_CHUNK_SIZE) ? FWUP_CHUNK_SIZE : left;
+
+        if (n < FWUP_CHUNK_SIZE && (s_ota.sent + left) < s_ota.image_size) {
+            *remain_len = left;
+            break;
+        }
+
+        st = sl_si91x_fwup_load(p, (uint16_t)n);
+
+        /* The NWP reports completion through the last load, not a status of its own. */
+        if (st == SL_STATUS_SI91X_FW_UPDATE_DONE) {
+            s_ota.sent += n;
+            s_ota.done = TRUE;
+            TKL_LOGI("ota image received, %lu bytes", s_ota.sent);
+            break;
+        }
+        if (st != SL_STATUS_OK) {
+            TKL_LOGE("fwup load failed 0x%lx at %lu", st, s_ota.sent);
+            sl_si91x_fwup_abort();
+            s_ota.active = FALSE;
+            return OPRT_COM_ERROR;
+        }
+
+        p += n;
+        left -= n;
+        s_ota.sent += n;
+    }
+
+    return OPRT_OK;
     // --- END: user implements ---
 }
 
@@ -85,9 +209,26 @@ OPERATE_RET tkl_ota_data_process(TUYA_OTA_DATA_T *pack, uint32_t *remain_len)
  */
 OPERATE_RET tkl_ota_end_notify(BOOL_T reset)
 {
-    TKL_UNUSED(reset);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    BOOL_T done = s_ota.done;
+
+    s_ota.active = FALSE;
+
+    if (!done) {
+        TKL_LOGE("ota incomplete, %lu of %lu", s_ota.sent, s_ota.image_size);
+        sl_si91x_fwup_abort();
+        __ota_reset();
+        return OPRT_COM_ERROR;
+    }
+
+    __ota_reset();
+
+    if (reset) {
+        TKL_LOGI("ota done, rebooting");
+        tkl_system_reset();
+    }
+
+    return OPRT_OK;
     // --- END: user implements ---
 }
 

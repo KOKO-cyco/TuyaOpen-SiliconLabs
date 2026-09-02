@@ -66,6 +66,8 @@ component:
     from: wiseconnect3_sdk
   - id: sl_si91x_soc_soft_reset
     from: wiseconnect3_sdk
+  - id: sl_si91x_fwup
+    from: wiseconnect3_sdk
   - id: sleeptimer_si91x
     from: wiseconnect3_sdk
   - id: sl_ulp_timer
