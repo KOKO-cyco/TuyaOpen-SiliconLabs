@@ -246,6 +246,18 @@ static bool                   g_wifi_initialized          = false;
 static sl_wifi_scan_result_t *g_wifi_scan_result          = NULL;
 static volatile bool          g_wifi_scan_complete        = false;
 static volatile sl_status_t   g_wifi_scan_callback_status = SL_STATUS_OK;
+
+/*
+ * Last requested NWP power-save. Scan/join force HIGH_PERFORMANCE; when the
+ * hold count drops back to zero the saved request is re-applied so a reconnect
+ * cannot leave the radio stuck in high performance.
+ */
+#define TKL_WIFI_LP_DTIM_MAX 10
+#define TKL_WIFI_BEACON_MS   100
+
+static BOOL_T  g_wifi_lp_wanted = FALSE;
+static uint8_t g_wifi_lp_dtim   = 1;
+static uint8_t g_wifi_lp_hold   = 0;
 const uint16_t                g_wifi_scan_buf_size =
     (sizeof(sl_wifi_scan_result_t) + (SL_WIFI_MAX_SCANNED_AP * sizeof(g_wifi_scan_result->scan_info[0])));
 
@@ -296,6 +308,10 @@ static size_t      _tkl_wifi_strnlen(const char *str, size_t max_len);
 static void        _tkl_wifi_ssid_copy(sl_wifi_ssid_t *dst, const char *src);
 static void        _tkl_wifi_register_callbacks(void);
 static OPERATE_RET _tkl_wifi_set_high_performance(void);
+static OPERATE_RET _tkl_wifi_apply_lp_profile(BOOL_T enable, uint8_t dtim);
+static void        _tkl_wifi_restore_lp(void);
+static void        _tkl_wifi_lp_hold_begin(void);
+static OPERATE_RET _tkl_wifi_lp_hold_end(OPERATE_RET rt);
 static BOOL_T      _tkl_wifi_is_sta_only(void);
 
 static size_t _tkl_wifi_strnlen(const char *str, size_t max_len)
@@ -337,21 +353,91 @@ static BOOL_T _tkl_wifi_is_sta_only(void)
 }
 
 /**
+ * @brief Apply an NWP performance profile
+ * @param[in] enable TRUE for associated power-save, FALSE for HIGH_PERFORMANCE
+ * @param[in] dtim   DTIM count from tal; clamped to [1, 10]
+ * @return OPRT_OK on success, OPRT_COM_ERROR on failure
+ */
+static OPERATE_RET _tkl_wifi_apply_lp_profile(BOOL_T enable, uint8_t dtim)
+{
+    sl_wifi_performance_profile_v2_t performance_profile = {0};
+    sl_status_t                      status;
+    uint8_t                          clamped             = dtim;
+    const char                      *name;
+
+    if (clamped == 0) {
+        clamped = 1;
+    } else if (clamped > TKL_WIFI_LP_DTIM_MAX) {
+        clamped = TKL_WIFI_LP_DTIM_MAX;
+    }
+
+    if (!enable) {
+        performance_profile.profile = HIGH_PERFORMANCE;
+        name                        = "HP";
+    } else {
+        /* DTIM 1/2: Fast PSP. DTIM >= 3: Max PSP. Chip listen interval max 1000 ms. */
+        performance_profile.profile           = (clamped >= 3) ? ASSOCIATED_POWER_SAVE
+                                                               : ASSOCIATED_POWER_SAVE_LOW_LATENCY;
+        performance_profile.dtim_aligned_type = SL_SI91X_ALIGN_WITH_DTIM_BEACON;
+        performance_profile.listen_interval   = (uint32_t)clamped * TKL_WIFI_BEACON_MS;
+        name                                  = (clamped >= 3) ? "MAX_PSP" : "FAST_PSP";
+    }
+
+    status = sl_wifi_set_performance_profile_v2(&performance_profile);
+    if (status != SL_STATUS_OK) {
+        TKL_LOGW("set performance profile %s failed: 0x%lx", name, status);
+        return OPRT_COM_ERROR;
+    }
+
+    TKL_LOGI("NWP profile %s dtim=%u listen=%lu", name, (unsigned)clamped,
+             (unsigned long)performance_profile.listen_interval);
+    return OPRT_OK;
+}
+
+/**
  * @brief Keep NWP out of power-save for scan/join under BLE coex
  * @return OPRT_OK on success, OPRT_COM_ERROR on failure
  */
 static OPERATE_RET _tkl_wifi_set_high_performance(void)
 {
-    sl_wifi_performance_profile_v2_t performance_profile = {0};
+    return _tkl_wifi_apply_lp_profile(FALSE, 0);
+}
 
-    performance_profile.profile = HIGH_PERFORMANCE;
-    sl_status_t status          = sl_wifi_set_performance_profile_v2(&performance_profile);
-    if (status != SL_STATUS_OK) {
-        TKL_LOGW("set HIGH_PERFORMANCE failed: 0x%lx", status);
-        return OPRT_COM_ERROR;
+/**
+ * @brief Re-apply the last requested LP profile once scan/join hold is clear
+ * @return none
+ */
+static void _tkl_wifi_restore_lp(void)
+{
+    if ((g_wifi_lp_hold > 0) || !g_wifi_lp_wanted) {
+        return;
     }
 
-    return OPRT_OK;
+    (void)_tkl_wifi_apply_lp_profile(TRUE, g_wifi_lp_dtim);
+}
+
+/**
+ * @brief Pause LP while scan/join runs (nested)
+ * @return none
+ */
+static void _tkl_wifi_lp_hold_begin(void)
+{
+    g_wifi_lp_hold++;
+    (void)_tkl_wifi_set_high_performance();
+}
+
+/**
+ * @brief Drop one scan/join hold and restore LP if this was the last
+ * @param[in] rt caller result, passed through
+ * @return rt
+ */
+static OPERATE_RET _tkl_wifi_lp_hold_end(OPERATE_RET rt)
+{
+    if (g_wifi_lp_hold > 0) {
+        g_wifi_lp_hold--;
+    }
+    _tkl_wifi_restore_lp();
+    return rt;
 }
 
 /**
@@ -711,7 +797,7 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
         tkl_wifi_init(NULL);
     }
 
-    (void)_tkl_wifi_set_high_performance();
+    _tkl_wifi_lp_hold_begin();
 
     sl_wifi_ssid_t               _ssid;
     sl_wifi_ssid_t              *specific_ssid = NULL;
@@ -730,7 +816,7 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
         g_wifi_scan_callback_status = SL_STATUS_FAIL;
         g_wifi_scan_result          = (sl_wifi_scan_result_t *)tkl_system_malloc(g_wifi_scan_buf_size);
         if (g_wifi_scan_result == NULL) {
-            return OPRT_MALLOC_FAILED;
+            return _tkl_wifi_lp_hold_end(OPRT_MALLOC_FAILED);
         }
         memset(g_wifi_scan_result, 0, g_wifi_scan_buf_size);
 
@@ -742,7 +828,7 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
             tkl_result = _tkl_wifi_scan_build_ap_list(ssid, ap_ary, num);
             tkl_system_free(g_wifi_scan_result);
             g_wifi_scan_result = NULL;
-            return tkl_result;
+            return _tkl_wifi_lp_hold_end(tkl_result);
         }
 
         tkl_result = _tkl_wifi_scan_prepare_retry(status);
@@ -750,14 +836,14 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
         g_wifi_scan_result = NULL;
 
         if ((tkl_result != OPRT_OK) || ((attempt + 1) >= max_attempts)) {
-            return (tkl_result == OPRT_OK) ? OPRT_COM_ERROR : tkl_result;
+            return _tkl_wifi_lp_hold_end((tkl_result == OPRT_OK) ? OPRT_COM_ERROR : tkl_result);
         }
 
         TKL_LOGW("WiFi scan retry %u after recover", (unsigned)(attempt + 1));
         tkl_system_sleep(100);
     }
 
-    return OPRT_COM_ERROR;
+    return _tkl_wifi_lp_hold_end(OPRT_COM_ERROR);
 }
 
 /**
@@ -1178,10 +1264,19 @@ BOOL_T tkl_wifi_set_rf_calibrated(void)
  */
 OPERATE_RET tkl_wifi_set_lp_mode(const BOOL_T enable, const uint8_t dtim)
 {
-    TKL_UNUSED(enable);
-    TKL_UNUSED(dtim);
+    g_wifi_lp_wanted = enable;
+    if (enable) {
+        g_wifi_lp_dtim = dtim;
+    }
 
-    return OPRT_NOT_SUPPORTED;
+    /* Scan/join forced HIGH_PERFORMANCE; remember the request and apply later. */
+    if (g_wifi_lp_hold > 0) {
+        TKL_LOGI("NWP LP request deferred enable=%d dtim=%u hold=%u", (int)enable, (unsigned)dtim,
+                 (unsigned)g_wifi_lp_hold);
+        return OPRT_OK;
+    }
+
+    return _tkl_wifi_apply_lp_profile(enable, dtim);
 }
 
 /**
@@ -1225,7 +1320,7 @@ OPERATE_RET tkl_wifi_station_connect(const int8_t *ssid, const int8_t *passwd)
     memcpy(_psk, passwd, WIFI_PASSWD_LEN);
 
     tkl_system_sleep(1000);
-    (void)_tkl_wifi_set_high_performance();
+    _tkl_wifi_lp_hold_begin();
 
     tkl_result = tkl_wifi_scan_ap(ssid, &ap_info, &ap_info_nums);
     if ((tkl_result == OPRT_OK) && (ap_info_nums > 0) && (ap_info != NULL)) {
@@ -1280,7 +1375,7 @@ OPERATE_RET tkl_wifi_station_connect(const int8_t *ssid, const int8_t *passwd)
         tkl_event_cb(status == SL_STATUS_OK ? WFE_CONNECTED : WFE_CONNECT_FAILED, NULL);
     }
 
-    return tkl_result;
+    return _tkl_wifi_lp_hold_end(tkl_result);
 }
 
 /**
