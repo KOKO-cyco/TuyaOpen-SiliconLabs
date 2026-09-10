@@ -108,3 +108,17 @@ OPERATE_RET tkl_wakeup_source_clear(const TUYA_WAKEUP_SOURCE_BASE_CFG_T *param)
     return OPRT_NOT_FOUND;
     // --- END: user implements ---
 }
+
+/**
+ * @brief count recorded wakeup sources
+ *
+ * @param[in] none
+ *
+ * @return number of recorded sources
+ */
+uint8_t tkl_wakeup_record_count(void)
+{
+    // --- BEGIN: user implements ---
+    return s_record_cnt;
+    // --- END: user implements ---
+}

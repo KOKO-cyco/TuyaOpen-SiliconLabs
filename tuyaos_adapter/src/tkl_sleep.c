@@ -14,9 +14,65 @@
 #include "tkl_sleep.h"
 #include "tuya_error_code.h"
 
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+#include "sl_si91x_power_manager.h"
+#include "sl_wifi.h"
+#if defined(ENABLE_WAKEUP) && (ENABLE_WAKEUP == 1)
+#include "tkl_wakeup.h"
+#endif
+#endif
+
 static uint8_t       s_awake_req = 0;
 static TUYA_SLEEP_CB_T s_sleep_cb;
 static BOOL_T        s_cb_valid  = FALSE;
+
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+static void __tkl_sleep_ps_event(sl_power_state_t from, sl_power_state_t to)
+{
+    (void)to;
+    if (!s_cb_valid) {
+        return;
+    }
+    if (SL_SI91X_POWER_MANAGER_SLEEP == from) {
+        if (s_sleep_cb.post_wakeup_cb) {
+            s_sleep_cb.post_wakeup_cb();
+        }
+    } else {
+        if (s_sleep_cb.pre_sleep_cb) {
+            s_sleep_cb.pre_sleep_cb();
+        }
+    }
+}
+
+static const sl_power_manager_ps_transition_event_info_t s_ps_evt_info = {
+    .event_mask = (SL_SI91X_POWER_MANAGER_EVENT_TRANSITION_ENTERING_PS4
+                   | SL_SI91X_POWER_MANAGER_EVENT_TRANSITION_ENTERING_PS3
+                   | SL_SI91X_POWER_MANAGER_EVENT_TRANSITION_ENTERING_PS2
+                   | SL_SI91X_POWER_MANAGER_EVENT_TRANSITION_LEAVING_SLEEP),
+    .on_event   = __tkl_sleep_ps_event,
+};
+
+static sl_power_manager_ps_transition_event_handle_t s_ps_evt_hdl;
+static BOOL_T s_ps_evt_sub = FALSE;
+
+static OPERATE_RET __tkl_sleep_enter_deepsleep(void)
+{
+#if defined(ENABLE_WAKEUP) && (ENABLE_WAKEUP == 1)
+    sl_wifi_performance_profile_v2_t profile = {0};
+
+    if (0 == tkl_wakeup_record_count()) {
+        return OPRT_INVALID_PARM;
+    }
+    profile.profile = DEEP_SLEEP_WITHOUT_RAM_RETENTION;
+    (void)sl_wifi_set_performance_profile_v2(&profile);
+    (void)sl_si91x_power_manager_remove_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+    (void)sl_si91x_power_manager_remove_ps_requirement(SL_SI91X_POWER_MANAGER_PS3);
+    return OPRT_OK;
+#else
+    return OPRT_INVALID_PARM;
+#endif
+}
+#endif
 // --- END: user defines and implements ---
 
 /**
@@ -35,6 +91,14 @@ OPERATE_RET tkl_cpu_sleep_callback_register(TUYA_SLEEP_CB_T *sleep_cb)
     }
     s_sleep_cb = *sleep_cb;
     s_cb_valid = TRUE;
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+    if (!s_ps_evt_sub) {
+        if (SL_STATUS_OK == sl_si91x_power_manager_subscribe_ps_transition_event(&s_ps_evt_hdl,
+                                                                                 &s_ps_evt_info)) {
+            s_ps_evt_sub = TRUE;
+        }
+    }
+#endif
     return OPRT_OK;
     // --- END: user implements ---
 }
@@ -52,6 +116,11 @@ void tkl_cpu_allow_sleep(void)
     if (s_awake_req > 0) {
         s_awake_req--;
     }
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+    if (0 == s_awake_req) {
+        (void)sl_si91x_power_manager_remove_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+    }
+#endif
     // --- END: user implements ---
 }
 
@@ -68,6 +137,9 @@ void tkl_cpu_force_wakeup(void)
     if (s_awake_req < 255) {
         s_awake_req++;
     }
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+    (void)sl_si91x_power_manager_add_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+#endif
     // --- END: user implements ---
 }
 
@@ -88,7 +160,11 @@ OPERATE_RET tkl_cpu_sleep_mode_set(BOOL_T enable, TUYA_CPU_SLEEP_MODE_E mode)
     // --- BEGIN: user implements ---
     if (TUYA_CPU_DEEP_SLEEP == mode) {
         if (enable) {
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+            return __tkl_sleep_enter_deepsleep();
+#else
             return OPRT_NOT_SUPPORTED;
+#endif
         }
         if (s_awake_req > 0) {
             s_awake_req--;
@@ -99,10 +175,18 @@ OPERATE_RET tkl_cpu_sleep_mode_set(BOOL_T enable, TUYA_CPU_SLEEP_MODE_E mode)
         if (s_awake_req > 0) {
             s_awake_req--;
         }
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+        if (0 == s_awake_req) {
+            (void)sl_si91x_power_manager_remove_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+        }
+#endif
     } else {
         if (s_awake_req < 255) {
             s_awake_req++;
         }
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+        (void)sl_si91x_power_manager_add_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+#endif
     }
     return OPRT_OK;
     // --- END: user implements ---

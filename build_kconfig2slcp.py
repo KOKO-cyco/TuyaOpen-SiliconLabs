@@ -118,6 +118,21 @@ maps = [
         ]
     },
     {
+        "name": "CONFIG_ENABLE_SIWX917_TICKLESS",
+        "component": [
+            {
+                "name":   "sl_power_manager",
+                "extension": "wiseconnect3_sdk",
+            },
+            {
+                "name":   "wireless_wakeup_ulp_component",
+                "extension": "wiseconnect3_sdk",
+            }
+        ],
+        "configuration": [
+        ]
+    },
+    {
         "name": "CONFIG_ENABLE_SPI",
         "component": [
             {"name": "sl_gspi", "extension": "wiseconnect3_sdk"},

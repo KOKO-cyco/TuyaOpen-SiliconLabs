@@ -22,6 +22,8 @@ OPERATE_RET tkl_wakeup_source_set(const TUYA_WAKEUP_SOURCE_BASE_CFG_T *param);
 
 OPERATE_RET tkl_wakeup_source_clear(const TUYA_WAKEUP_SOURCE_BASE_CFG_T *param);
 
+uint8_t tkl_wakeup_record_count(void);
+
 #ifdef __cplusplus
 }
 #endif

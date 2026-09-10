@@ -44,6 +44,10 @@
 #include "sl_core.h"
 #include "sl_si91x_hal_soc_soft_reset.h"
 
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+#include "sl_sleeptimer.h"
+#endif
+
 #if TKL_ULP_TIMER_SYSTICK_ENABLE
 
 // -----------------------------------------------------------------------------
@@ -114,7 +118,9 @@ SYS_TICK_T tkl_system_get_tick_count(void)
  */
 SYS_TIME_T tkl_system_get_millisecond(void)
 {
-#if TKL_ULP_TIMER_SYSTICK_ENABLE
+#if defined(ENABLE_SIWX917_TICKLESS) && (ENABLE_SIWX917_TICKLESS == 1)
+    return (SYS_TIME_T)((sl_sleeptimer_get_tick_count64() * 1000) / sl_sleeptimer_get_timer_frequency());
+#elif TKL_ULP_TIMER_SYSTICK_ENABLE
     uint32_t usec = 0;
 
     tkl_timer_get(SL_SYSTICK_MS_TIMER, &usec);
@@ -158,7 +164,18 @@ TUYA_RESET_REASON_E tkl_system_get_reset_reason(char **describe)
 {
     TKL_UNUSED(describe);
 
-    return TUYA_RESET_REASON_UNSUPPORT;
+    /* MCU_FSM_WAKEUP_STATUS_REG (MCU FSM base + 0x38); bit meanings from
+     * rsi_power_save.h "wake up status register". Sticky until power loss,
+     * so a set WAKEUP_INDICATION reliably means "rebooted from PS0". */
+    uint32_t wakeup_status = *(volatile uint32_t *)(0x24048100UL + 0x38UL);
+
+    if (wakeup_status & 0x01UL) {
+        return TUYA_RESET_REASON_DEEPSLEEP;
+    }
+    if (wakeup_status & 0x08UL) {
+        return TUYA_RESET_REASON_HW_WDOG;
+    }
+    return TUYA_RESET_REASON_UNKNOWN;
 }
 
 /**
