@@ -107,6 +107,10 @@ if(CONFIG_ENABLE_DAC STREQUAL "y")
     list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_dac.c")
 endif()
 
+if(CONFIG_ENABLE_WAKEUP STREQUAL "y")
+    list(APPEND ADAPTER_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_wakeup.c")
+endif()
+
 set(INIT_SRC "${CMAKE_SOURCE_DIR}/tuyaos_adapter/include/init/src/tkl_init_common.c")
 
 if(CONFIG_ENABLE_WIFI)

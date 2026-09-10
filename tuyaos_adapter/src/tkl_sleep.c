@@ -13,6 +13,10 @@
 // --- BEGIN: user defines and implements ---
 #include "tkl_sleep.h"
 #include "tuya_error_code.h"
+
+static uint8_t       s_awake_req = 0;
+static TUYA_SLEEP_CB_T s_sleep_cb;
+static BOOL_T        s_cb_valid  = FALSE;
 // --- END: user defines and implements ---
 
 /**
@@ -26,7 +30,12 @@ OPERATE_RET tkl_cpu_sleep_callback_register(TUYA_SLEEP_CB_T *sleep_cb)
 {
     TKL_UNUSED(sleep_cb);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    if (NULL == sleep_cb) {
+        return OPRT_INVALID_PARM;
+    }
+    s_sleep_cb = *sleep_cb;
+    s_cb_valid = TRUE;
+    return OPRT_OK;
     // --- END: user implements ---
 }
 
@@ -40,7 +49,9 @@ OPERATE_RET tkl_cpu_sleep_callback_register(TUYA_SLEEP_CB_T *sleep_cb)
 void tkl_cpu_allow_sleep(void)
 {
     // --- BEGIN: user implements ---
-
+    if (s_awake_req > 0) {
+        s_awake_req--;
+    }
     // --- END: user implements ---
 }
 
@@ -54,7 +65,9 @@ void tkl_cpu_allow_sleep(void)
 void tkl_cpu_force_wakeup(void)
 {
     // --- BEGIN: user implements ---
-
+    if (s_awake_req < 255) {
+        s_awake_req++;
+    }
     // --- END: user implements ---
 }
 
@@ -73,6 +86,24 @@ OPERATE_RET tkl_cpu_sleep_mode_set(BOOL_T enable, TUYA_CPU_SLEEP_MODE_E mode)
     TKL_UNUSED(enable);
     TKL_UNUSED(mode);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    if (TUYA_CPU_DEEP_SLEEP == mode) {
+        if (enable) {
+            return OPRT_NOT_SUPPORTED;
+        }
+        if (s_awake_req > 0) {
+            s_awake_req--;
+        }
+        return OPRT_OK;
+    }
+    if (enable) {
+        if (s_awake_req > 0) {
+            s_awake_req--;
+        }
+    } else {
+        if (s_awake_req < 255) {
+            s_awake_req++;
+        }
+    }
+    return OPRT_OK;
     // --- END: user implements ---
 }
