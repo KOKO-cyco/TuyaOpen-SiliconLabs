@@ -296,7 +296,12 @@ static size_t      _tkl_wifi_strnlen(const char *str, size_t max_len);
 static void        _tkl_wifi_ssid_copy(sl_wifi_ssid_t *dst, const char *src);
 static void        _tkl_wifi_register_callbacks(void);
 static OPERATE_RET _tkl_wifi_set_high_performance(void);
+static OPERATE_RET _tkl_wifi_apply_lp_profile(BOOL_T enable, uint8_t dtim);
+static void        _tkl_wifi_restore_lp(void);
 static BOOL_T      _tkl_wifi_is_sta_only(void);
+
+static BOOL_T  g_wifi_lp_wanted = FALSE;
+static uint8_t g_wifi_lp_dtim   = 10;
 
 static size_t _tkl_wifi_strnlen(const char *str, size_t max_len)
 {
@@ -742,6 +747,7 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
             tkl_result = _tkl_wifi_scan_build_ap_list(ssid, ap_ary, num);
             tkl_system_free(g_wifi_scan_result);
             g_wifi_scan_result = NULL;
+            _tkl_wifi_restore_lp();
             return tkl_result;
         }
 
@@ -750,6 +756,7 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
         g_wifi_scan_result = NULL;
 
         if ((tkl_result != OPRT_OK) || ((attempt + 1) >= max_attempts)) {
+            _tkl_wifi_restore_lp();
             return (tkl_result == OPRT_OK) ? OPRT_COM_ERROR : tkl_result;
         }
 
@@ -757,6 +764,7 @@ OPERATE_RET tkl_wifi_scan_ap(const int8_t *ssid, AP_IF_S **ap_ary, uint32_t *num
         tkl_system_sleep(100);
     }
 
+    _tkl_wifi_restore_lp();
     return OPRT_COM_ERROR;
 }
 
@@ -1037,6 +1045,65 @@ OPERATE_RET tkl_wifi_get_mac(const WF_IF_E wf, NW_MAC_S *mac)
 }
 
 /**
+ * @brief Apply an NWP performance profile; power-save only while associated
+ * @return OPRT_OK on success, OPRT_COM_ERROR if NWP must not be touched yet
+ *
+ * Never blocks boot: returns early without any SL call when the WiFi stack
+ * is not initialized or the station is not associated. Callers park the
+ * request in g_wifi_lp_wanted/dtim instead, scan/join force HP, and
+ * _tkl_wifi_restore_lp re-applies after association.
+ */
+static OPERATE_RET _tkl_wifi_apply_lp_profile(BOOL_T enable, uint8_t dtim)
+{
+    sl_wifi_performance_profile_v2_t profile = {0};
+    uint8_t                          clamped = dtim;
+
+    if (!g_wifi_initialized) {
+        return OPRT_COM_ERROR;
+    }
+
+    if (clamped == 0) {
+        clamped = 1;
+    } else if (clamped > 10) {
+        clamped = 10;
+    }
+
+    if (!enable) {
+        profile.profile = HIGH_PERFORMANCE;
+    } else {
+        if (wifi_sta_conn_status < WSS_CONN_SUCCESS) {
+            return OPRT_COM_ERROR;
+        }
+        profile.profile = (clamped >= 3) ? ASSOCIATED_POWER_SAVE : ASSOCIATED_POWER_SAVE_LOW_LATENCY;
+        profile.dtim_aligned_type = SL_SI91X_ALIGN_WITH_DTIM_BEACON;
+        profile.listen_interval   = clamped;
+    }
+
+    if (sl_wifi_set_performance_profile_v2(&profile) != SL_STATUS_OK) {
+        TKL_LOGW("set NWP profile %s failed", enable ? "PS" : "HP");
+        return OPRT_COM_ERROR;
+    }
+
+    if (enable) {
+        if (sl_wifi_filter_broadcast(5000, 1, 1) != SL_STATUS_OK) {
+            TKL_LOGW("NWP broadcast filter on failed; PS kept");
+        }
+    } else {
+        (void)sl_wifi_filter_broadcast(5000, 0, 1);
+    }
+
+    return OPRT_OK;
+}
+
+static void _tkl_wifi_restore_lp(void)
+{
+    if (!g_wifi_lp_wanted) {
+        return;
+    }
+    (void)_tkl_wifi_apply_lp_profile(TRUE, g_wifi_lp_dtim);
+}
+
+/**
  * @brief set wifi work mode
  *
  * @param[in]       mode        wifi work mode
@@ -1178,10 +1245,20 @@ BOOL_T tkl_wifi_set_rf_calibrated(void)
  */
 OPERATE_RET tkl_wifi_set_lp_mode(const BOOL_T enable, const uint8_t dtim)
 {
-    TKL_UNUSED(enable);
-    TKL_UNUSED(dtim);
+    g_wifi_lp_wanted = enable ? TRUE : FALSE;
+    if (enable) {
+        g_wifi_lp_dtim = (dtim == 0) ? 1 : dtim;
+        if (!g_wifi_initialized || (wifi_sta_conn_status < WSS_CONN_SUCCESS)) {
+            TKL_LOGI("NWP LP parked until associated");
+            return OPRT_OK;
+        }
+        return _tkl_wifi_apply_lp_profile(TRUE, g_wifi_lp_dtim);
+    }
 
-    return OPRT_NOT_SUPPORTED;
+    if (!g_wifi_initialized) {
+        return OPRT_OK;
+    }
+    return _tkl_wifi_apply_lp_profile(FALSE, 0);
 }
 
 /**
@@ -1271,6 +1348,7 @@ OPERATE_RET tkl_wifi_station_connect(const int8_t *ssid, const int8_t *passwd)
     if (status == SL_STATUS_OK) {
         wifi_sta_conn_status = WSS_CONN_SUCCESS;
         _tkl_wifi_station_linkup();
+        _tkl_wifi_restore_lp();
         tkl_result = OPRT_OK;
     } else {
         tkl_result = OPRT_COM_ERROR;
