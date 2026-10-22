@@ -13,6 +13,17 @@
 // --- BEGIN: user defines and implements ---
 #include "tkl_sleep.h"
 #include "tuya_error_code.h"
+
+#include "sl_wifi.h"
+#include "sl_si91x_driver.h"
+#include "sl_si91x_power_manager.h"
+#include "rsi_power_save.h"
+#include "tkl_uart.h"
+
+extern void     tkl_system_timer_resync(uint32_t elapsed_ms);
+extern uint32_t g_wake_timer_ms;
+
+static TUYA_SLEEP_CB_T *sg_sleep_cb = NULL;
 // --- END: user defines and implements ---
 
 /**
@@ -24,9 +35,9 @@
  */
 OPERATE_RET tkl_cpu_sleep_callback_register(TUYA_SLEEP_CB_T *sleep_cb)
 {
-    TKL_UNUSED(sleep_cb);
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    sg_sleep_cb = sleep_cb;
+    return OPRT_OK;
     // --- END: user implements ---
 }
 
@@ -70,9 +81,52 @@ void tkl_cpu_force_wakeup(void)
  */
 OPERATE_RET tkl_cpu_sleep_mode_set(BOOL_T enable, TUYA_CPU_SLEEP_MODE_E mode)
 {
-    TKL_UNUSED(enable);
-    TKL_UNUSED(mode);
+    sl_status_t status;
+    uint8_t     xtal_enable = 1;
+
     // --- BEGIN: user implements ---
-    return OPRT_NOT_SUPPORTED;
+    if (FALSE == enable) {
+        return OPRT_OK;
+    }
+
+    if (TUYA_CPU_DEEP_SLEEP != mode) {
+        return OPRT_NOT_SUPPORTED;
+    }
+
+    if (NULL != sg_sleep_cb && NULL != sg_sleep_cb->pre_sleep_cb) {
+        sg_sleep_cb->pre_sleep_cb();
+    }
+
+    status = sl_si91x_m4_ta_secure_handshake(SL_SI91X_ENABLE_XTAL, 1, &xtal_enable, 0, NULL);
+    if (SL_STATUS_OK != status) {
+        return OPRT_COM_ERROR;
+    }
+
+    status = sl_si91x_power_manager_add_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+    if (SL_STATUS_OK != status) {
+        return OPRT_COM_ERROR;
+    }
+
+    status = sl_si91x_power_manager_sleep();
+    if (SL_STATUS_OK != status) {
+        return OPRT_COM_ERROR;
+    }
+    tkl_system_timer_resync(g_wake_timer_ms);
+
+    {
+        TUYA_UART_BASE_CFG_T base_cfg = {
+            .baudrate = 115200,
+            .databits = TUYA_UART_DATA_LEN_8BIT,
+            .stopbits = TUYA_UART_STOP_LEN_1BIT,
+            .parity   = TUYA_UART_PARITY_TYPE_NONE,
+        };
+        tkl_uart_init(TUYA_UART_NUM_0, &base_cfg);
+    }
+
+    if (NULL != sg_sleep_cb && NULL != sg_sleep_cb->post_wakeup_cb) {
+        sg_sleep_cb->post_wakeup_cb();
+    }
+
+    return OPRT_OK;
     // --- END: user implements ---
 }

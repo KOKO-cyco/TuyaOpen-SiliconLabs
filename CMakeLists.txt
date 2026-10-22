@@ -60,6 +60,7 @@ set(ADAPTER_SRC
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_output.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_system.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_sleep.c"
+    "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_wakeup.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_memory.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_mutex.c"
     "${CMAKE_SOURCE_DIR}/tuyaos_adapter/src/tkl_semaphore.c"

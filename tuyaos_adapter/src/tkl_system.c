@@ -59,6 +59,7 @@
 // -----------------------------------------------------------------------------
 
 volatile SYS_TIME_T g_mstick = 0;
+static volatile SYS_TIME_T g_last_ms = 0;
 
 // -----------------------------------------------------------------------------
 //                          Public Function Definitions
@@ -77,6 +78,19 @@ void tkl_system_timer_init(void)
 
     tkl_timer_init(SL_SYSTICK_MS_TIMER, &sg_timer_cfg);
     tkl_timer_start(SL_SYSTICK_MS_TIMER, SL_SYSTICK_MS_TIMER_COUNT);
+}
+
+void tkl_system_timer_resync(uint32_t elapsed_ms)
+{
+    SYS_TIME_T base = g_last_ms + elapsed_ms;
+
+    if (base < g_mstick) {
+        base = g_mstick;
+    }
+
+    g_mstick  = base;
+    g_last_ms = base;
+    tkl_system_timer_init();
 }
 
 #endif /* TKL_ULP_TIMER_SYSTICK_ENABLE */
@@ -118,8 +132,13 @@ SYS_TIME_T tkl_system_get_millisecond(void)
     uint32_t usec = 0;
 
     tkl_timer_get(SL_SYSTICK_MS_TIMER, &usec);
+    if (usec >= SL_SYSTICK_MS_TIMER_COUNT) {
+        return g_last_ms;
+    }
 
-    return g_mstick + (usec / 1000);
+    g_last_ms = g_mstick + (usec / 1000);
+
+    return g_last_ms;
 #else
     return (SYS_TIME_T)pdTICKS_TO_MS(tkl_system_get_tick_count());
 #endif
