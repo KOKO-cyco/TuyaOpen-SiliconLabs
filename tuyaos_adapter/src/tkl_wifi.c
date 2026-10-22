@@ -1178,10 +1178,20 @@ BOOL_T tkl_wifi_set_rf_calibrated(void)
  */
 OPERATE_RET tkl_wifi_set_lp_mode(const BOOL_T enable, const uint8_t dtim)
 {
-    TKL_UNUSED(enable);
-    TKL_UNUSED(dtim);
+    sl_wifi_performance_profile_v2_t performance_profile = {0};
 
-    return OPRT_NOT_SUPPORTED;
+    if (FALSE == enable) {
+        return _tkl_wifi_set_high_performance();
+    }
+
+    performance_profile.profile         = ASSOCIATED_POWER_SAVE;
+    performance_profile.listen_interval = (dtim > 1) ? dtim : 1;
+
+    if (SL_STATUS_OK != sl_wifi_set_performance_profile_v2(&performance_profile)) {
+        return OPRT_COM_ERROR;
+    }
+
+    return OPRT_OK;
 }
 
 /**
