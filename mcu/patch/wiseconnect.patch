@@ -334,3 +334,48 @@ index e3c42b17..81b23409 100644
  {
    struct netif *ifp;
    sl_wifi_system_packet_t *packet;
+diff --git a/components/device/silabs/si91x/mcu/drivers/service/power_manager/src/sli_si91x_power_manager_wakeup_init.c b/components/device/silabs/si91x/mcu/drivers/service/power_manager/src/sli_si91x_power_manager_wakeup_init.c
+index 030df1b..a8dbed0 100644
+--- a/components/device/silabs/si91x/mcu/drivers/service/power_manager/src/sli_si91x_power_manager_wakeup_init.c
++++ b/components/device/silabs/si91x/mcu/drivers/service/power_manager/src/sli_si91x_power_manager_wakeup_init.c
+@@ -329,6 +329,8 @@ sl_status_t sli_si91x_power_manager_wdt_init(void)
+ /*******************************************************************************
+  * Deep sleep timer based wakeup is initialized.
+  ******************************************************************************/
++__attribute__((weak)) uint32_t sli_si91x_power_manager_dst_duration_us = DST_WAKEUP_TIME;
++
+ sl_status_t sli_si91x_power_manager_dst_init(void)
+ {
+   sl_status_t status = SL_STATUS_OK;
+@@ -352,7 +354,7 @@ sl_status_t sli_si91x_power_manager_dst_init(void)
+   /* Time Period Programming */
+   RSI_TIMEPERIOD_TimerClkSel(TIME_PERIOD, 0x003E7FFF);
+ 
+-  RSI_DST_DurationSet(DST_WAKEUP_TIME);
++  RSI_DST_DurationSet(sli_si91x_power_manager_dst_duration_us);
+   status = sl_si91x_power_manager_set_wakeup_sources(SL_SI91X_POWER_MANAGER_DST_WAKEUP, true);
+   if (status != SL_STATUS_OK) {
+     // If status is not OK, return with the error code.
+diff --git a/third_party/silicon_labs/freertos/src/sl_si91x_low_power_tickless_mode.c b/third_party/silicon_labs/freertos/src/sl_si91x_low_power_tickless_mode.c
+index f1611e3..77b76d5 100644
+--- a/third_party/silicon_labs/freertos/src/sl_si91x_low_power_tickless_mode.c
++++ b/third_party/silicon_labs/freertos/src/sl_si91x_low_power_tickless_mode.c
+@@ -72,6 +72,8 @@ typedef enum {
+ /* Schedule wakeup timer call-back handler */
+ static void sli_schedule_wakeup_timer_expire_handler(sl_sleeptimer_timer_handle_t *handle, void *data);
+ 
++bool sli_iot_power_ok_to_sleep(void);
++
+ /**************************************************************************
+  * @fn           static void sli_os_schedule_wakeup(TickType_t os_ticks)
+  * @brief        This function wakeup core based on teh timer value.
+@@ -174,7 +176,8 @@ void vPortSuppressTicksAndSleep(TickType_t xExpectedIdleTime)
+   __asm volatile("isb");
+ 
+   // Checking the pre-sleep conditions. If these conditions are met, the core does not enter sleep mode.
+-  if ((eTaskConfirmSleepModeStatus() == sl_eAbortSleep) || (sl_si91x_power_manager_is_ok_to_sleep() == false)) {
++  if ((eTaskConfirmSleepModeStatus() == sl_eAbortSleep) || (sl_si91x_power_manager_is_ok_to_sleep() == false)
++      || (sli_iot_power_ok_to_sleep() == false)) {
+     xExpectedIdleTime = 0;
+     // Enable the NVIC interrupts.
+     __asm volatile("cpsie i" ::: "memory");

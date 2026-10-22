@@ -49,11 +49,15 @@
  */
 OPERATE_RET tkl_mutex_create_init(TKL_MUTEX_HANDLE *handle)
 {
+    static const osMutexAttr_t attr = {
+        .attr_bits = osMutexRecursive,
+    };
+
     if (!handle) {
         return OPRT_INVALID_PARM;
     }
 
-    *handle = (TKL_MUTEX_HANDLE)osMutexNew(NULL);
+    *handle = (TKL_MUTEX_HANDLE)osMutexNew(&attr);
     if (NULL == *handle) {
         return OPRT_OS_ADAPTER_MUTEX_CREAT_FAILED;
     }
