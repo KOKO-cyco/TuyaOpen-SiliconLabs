@@ -20,10 +20,46 @@
 #include "rsi_power_save.h"
 #include "tkl_uart.h"
 
+#if TKL_ULP_TIMER_SYSTICK_ENABLE
 extern void     tkl_system_timer_resync(uint32_t elapsed_ms);
 extern uint32_t g_wake_timer_ms;
+#endif
 
-static TUYA_SLEEP_CB_T *sg_sleep_cb = NULL;
+static TUYA_SLEEP_CB_T *sg_sleep_cb   = NULL;
+static volatile BOOL_T  s_lp_allowed = TRUE;
+
+#if (SL_SI91X_TICKLESS_MODE == 1)
+static sl_power_manager_ps_transition_event_handle_t s_ps_event_handle;
+
+static void ps_transition_cb(sl_power_state_t from, sl_power_state_t to)
+{
+    TUYA_UART_BASE_CFG_T cfg = {
+        .baudrate = 115200,
+        .databits = TUYA_UART_DATA_LEN_8BIT,
+        .stopbits = TUYA_UART_STOP_LEN_1BIT,
+        .parity   = TUYA_UART_PARITY_TYPE_NONE,
+    };
+
+    (void)from;
+    (void)to;
+    tkl_uart_init(TUYA_UART_NUM_0, &cfg);
+}
+
+void tkl_sleep_wakeup_init(void)
+{
+    static const sl_power_manager_ps_transition_event_info_t info = {
+        .event_mask = SL_SI91X_POWER_MANAGER_EVENT_TRANSITION_LEAVING_SLEEP,
+        .on_event   = ps_transition_cb,
+    };
+
+    sl_si91x_power_manager_subscribe_ps_transition_event(&s_ps_event_handle, &info);
+}
+
+bool sli_iot_power_ok_to_sleep(void)
+{
+    return (bool)s_lp_allowed;
+}
+#endif
 // --- END: user defines and implements ---
 
 /**
@@ -51,7 +87,7 @@ OPERATE_RET tkl_cpu_sleep_callback_register(TUYA_SLEEP_CB_T *sleep_cb)
 void tkl_cpu_allow_sleep(void)
 {
     // --- BEGIN: user implements ---
-
+    s_lp_allowed = TRUE;
     // --- END: user implements ---
 }
 
@@ -65,7 +101,7 @@ void tkl_cpu_allow_sleep(void)
 void tkl_cpu_force_wakeup(void)
 {
     // --- BEGIN: user implements ---
-
+    s_lp_allowed = FALSE;
     // --- END: user implements ---
 }
 
@@ -85,6 +121,14 @@ OPERATE_RET tkl_cpu_sleep_mode_set(BOOL_T enable, TUYA_CPU_SLEEP_MODE_E mode)
     uint8_t     xtal_enable = 1;
 
     // --- BEGIN: user implements ---
+    if (TUYA_CPU_SLEEP == mode) {
+        if (enable == s_lp_allowed) {
+            return OPRT_OK;
+        }
+        s_lp_allowed = enable;
+        return OPRT_OK;
+    }
+
     if (FALSE == enable) {
         return OPRT_OK;
     }
@@ -111,7 +155,10 @@ OPERATE_RET tkl_cpu_sleep_mode_set(BOOL_T enable, TUYA_CPU_SLEEP_MODE_E mode)
     if (SL_STATUS_OK != status) {
         return OPRT_COM_ERROR;
     }
+    sl_si91x_power_manager_remove_ps_requirement(SL_SI91X_POWER_MANAGER_PS4);
+#if TKL_ULP_TIMER_SYSTICK_ENABLE
     tkl_system_timer_resync(g_wake_timer_ms);
+#endif
 
     {
         TUYA_UART_BASE_CFG_T base_cfg = {

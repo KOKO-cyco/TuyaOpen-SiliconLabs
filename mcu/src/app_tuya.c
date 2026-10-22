@@ -73,6 +73,7 @@ static void app_main_handle(void *arg);
 
 extern void tuya_app_main(void);
 extern void user_main(void);
+extern void tkl_sleep_wakeup_init(void);
 
 // -----------------------------------------------------------------------------
 //                                Static Variables
@@ -129,6 +130,7 @@ static void app_main_handle(void *arg)
 #endif
 
     tkl_uart_init(TUYA_UART_NUM_0, &base_cfg);
+    tkl_sleep_wakeup_init();
 
     wifi_config = (sl_wifi_device_configuration_t *)tkl_wifi_get_configuration();
 
